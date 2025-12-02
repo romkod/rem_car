@@ -13,6 +13,7 @@ let DELETE_PASSWORD_HASH = "";
 let firebaseInitialized = false;
 let database = null;
 let carsRef = null;
+let isSyncingCars = false; // Прапорець для запобігання циклічним оновленням
 
 // Список автомобілів
 let cars = [];
@@ -79,21 +80,69 @@ function setupFirebaseListener() {
     
     try {
         carsRef = database.ref('cars');
+        console.log('Налаштування слухача Firebase для списку автомобілів');
         
         carsRef.on('value', (snapshot) => {
+            if (isSyncingCars) {
+                console.log('Слухач Firebase: пропускаємо оновлення, бо isSyncingCars = true');
+                return; // Якщо ми самі зберігаємо, не оновлювати
+            }
+            
             const data = snapshot.val();
             if (data) {
-                cars = Object.keys(data).map(key => ({
+                const loadedCars = Object.keys(data).map(key => ({
                     id: key,
                     ...data[key]
                 }));
+                
+                // Порівняти з поточними даними, щоб уникнути непотрібних оновлень
+                const currentCarsStr = JSON.stringify(cars);
+                const loadedCarsStr = JSON.stringify(loadedCars);
+                
+                if (currentCarsStr !== loadedCarsStr) {
+                    console.log('Дані списку автомобілів змінилися, оновлюємо...');
+                    isSyncingCars = true;
+                    cars = loadedCars;
+                    
+                    // Зберегти в localStorage
+                    localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
+                    renderCars();
+                    
+                    // Зняти прапорець через затримку
+                    setTimeout(() => {
+                        isSyncingCars = false;
+                        console.log('Синхронізацію списку автомобілів завершено, isSyncingCars = false');
+                    }, 1000);
+                } else {
+                    console.log('Дані списку автомобілів не змінилися, пропускаємо оновлення');
+                }
             } else {
-                cars = [];
+                // Якщо в Firebase немає даних, завантажити з localStorage
+                const localData = localStorage.getItem('repairCalculatorCars');
+                if (localData) {
+                    try {
+                        const localCars = JSON.parse(localData);
+                        if (localCars.length > 0) {
+                            isSyncingCars = true;
+                            cars = localCars;
+                            // Зберегти в Firebase для синхронізації
+                            const carsObj = {};
+                            cars.forEach(car => {
+                                carsObj[car.id] = { brand: car.brand, model: car.model };
+                            });
+                            carsRef.set(carsObj).then(() => {
+                                console.log('Дані з localStorage збережено в Firebase');
+                                setTimeout(() => { isSyncingCars = false; }, 1000);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Помилка завантаження з localStorage:', e);
+                    }
+                } else {
+                    cars = [];
+                }
+                renderCars();
             }
-            
-            // Зберегти в localStorage
-            localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
-            renderCars();
         }, (error) => {
             console.error('Помилка слухача Firebase:', error);
             loadCars();
@@ -127,14 +176,48 @@ function loadCars() {
 }
 
 // Збереження списку авто
-function saveCars() {
+async function saveCars() {
+    // Зберегти в localStorage одразу
     localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
-    if (firebaseInitialized && carsRef) {
+    
+    // Якщо Firebase не налаштовано, вийти
+    if (!firebaseInitialized || !database) {
+        console.log('Firebase не налаштовано, дані збережено тільки в localStorage');
+        return;
+    }
+    
+    // Якщо вже синхронізуємо, не викликати знову
+    if (isSyncingCars) {
+        console.log('Вже виконується синхронізація списку автомобілів, пропускаємо...');
+        return;
+    }
+    
+    // Якщо carsRef не встановлено, встановити його
+    if (!carsRef) {
+        carsRef = database.ref('cars');
+        console.log('carsRef встановлено: cars');
+    }
+    
+    try {
+        isSyncingCars = true;
+        console.log('Збереження списку автомобілів в Firebase...');
+        
         const carsObj = {};
         cars.forEach(car => {
             carsObj[car.id] = { brand: car.brand, model: car.model };
         });
-        carsRef.set(carsObj);
+        
+        await carsRef.set(carsObj);
+        console.log('Список автомобілів збережено в Firebase');
+        
+        // Зняти прапорець через затримку
+        setTimeout(() => {
+            isSyncingCars = false;
+            console.log('Синхронізацію списку автомобілів завершено, isSyncingCars = false');
+        }, 1500);
+    } catch (error) {
+        console.error('Помилка збереження списку автомобілів в Firebase:', error);
+        isSyncingCars = false;
     }
 }
 
