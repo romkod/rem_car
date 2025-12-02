@@ -6,48 +6,319 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: #f4f5f7;
     color: #222;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Плаваюча кнопка перемикання тем */
+.theme-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.theme-toggle-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Стилі для опцій теми */
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #e1e4eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+.theme-option:hover {
+    border-color: #1f4f7b;
+    background: #f8f9fb;
+}
+.theme-option input[type="radio"] {
+    display: none;
+}
+.theme-option input[type="radio"]:checked + .theme-preview {
+    border: 3px solid #1f4f7b;
+}
+.theme-preview {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+.theme-option span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Темна тема */
+body.theme-dark {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+body.theme-dark header {
+    background: #2d2d2d;
+    color: #fff;
+}
+body.theme-dark .card {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+body.theme-dark .category {
+    background: #333;
+    border-color: #444;
+}
+body.theme-dark .item {
+    border-bottom-color: #444;
+}
+body.theme-dark .form-input,
+body.theme-dark .item-name-input,
+body.theme-dark .item-price input {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+body.theme-dark .modal-content {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+body.theme-dark .theme-option {
+    border-color: #444;
+}
+body.theme-dark .theme-option:hover {
+    border-color: #667eea;
+    background: #333;
+}
+body.theme-dark .category-header {
+    border-bottom-color: #444;
+}
+body.theme-dark .category-header h3 {
+    color: #667eea;
+}
+body.theme-dark .category-header span {
+    color: #b0b0b0;
+}
+body.theme-dark .theme-toggle-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+body.theme-dark .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+body.theme-dark .item-price {
+    color: #e0e0e0;
+}
+body.theme-dark .item label {
+    color: #e0e0e0;
+}
+body.theme-dark .note {
+    color: #b0b0b0;
+}
+body.theme-dark .card h2 {
+    color: #e0e0e0;
+}
+body.theme-dark .card small {
+    color: #b0b0b0;
+}
+body.theme-dark .summary-main {
+    color: #e0e0e0;
+}
+body.theme-dark .summary-row span.label {
+    color: #b0b0b0;
+}
+body.theme-dark .summary-row span.value {
+    color: #e0e0e0;
+}
+body.theme-dark .summary-footer {
+    color: #b0b0b0;
+}
+body.theme-dark .btn-clear {
+    background: #444;
+    color: #e0e0e0;
+}
+body.theme-dark .btn-clear:hover {
+    background: #555;
+}
+body.theme-dark .btn-export {
+    background: #667eea;
+    color: #fff;
+}
+body.theme-dark .btn-export:hover {
+    background: #5568d3;
+}
+body.theme-dark .btn-delete {
+    background: #dc3545;
+    color: #fff;
+}
+body.theme-dark .btn-delete:hover {
+    background: #c82333;
+}
+body.theme-dark .btn-delete-category {
+    background: #dc3545;
+    color: #fff;
+}
+body.theme-dark .btn-delete-category:hover {
+    background: #c82333;
+}
+body.theme-dark .btn-dependencies {
+    background: #17a2b8;
+    color: #fff;
+}
+body.theme-dark .btn-dependencies:hover {
+    background: #138496;
+}
+body.theme-dark .edit-form {
+    background: #333;
+    border-color: #555;
+}
+body.theme-dark .edit-form h3 {
+    color: #667eea;
+}
+body.theme-dark .add-item-form {
+    background: #333;
+    border-color: #555;
+}
+body.theme-dark .modal-content h3 {
+    color: #667eea;
+}
+body.theme-dark .modal-note {
+    color: #b0b0b0;
+}
+body.theme-dark .theme-option span {
+    color: #e0e0e0;
+}
+
+/* Відображення курсу валют */
+.exchange-rate {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 24px;
+    text-align: center;
+    font-size: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+body.theme-dark .exchange-rate {
+    background: rgba(0, 0, 0, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Стилі для вибору валюти в режимі редагування */
+.item-currency-select {
+    padding: 6px 8px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    cursor: pointer;
+    min-width: 100px;
+}
+.item-currency-select:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+body.theme-dark .item-currency-select {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
 }
 header {
     background: #1f4f7b;
     color: #fff;
-    padding: 16px 24px;
+    padding: 16px 24px 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    width: 100%;
+    box-sizing: border-box;
 }
 header h1 {
     margin: 0;
     font-size: 22px;
+    text-align: center;
 }
 header p {
     margin: 4px 0 0;
     font-size: 14px;
     opacity: 0.9;
+    text-align: center;
 }
 .header-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     gap: 16px;
+    padding: 16px 0;
+    text-align: center;
+}
+.header-text {
+    text-align: center;
 }
 @media (max-width: 900px) {
     .header-content {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+    }
+    .header-text {
+        text-align: center;
     }
 }
 .wrapper {
     max-width: 1600px;
     margin: 20px auto;
     padding: 0 16px 32px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.header-container {
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 .layout {
-    display: grid;
-    grid-template-columns: 2fr 1.5fr;
+    display: flex;
+    justify-content: center;
     gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    align-items: flex-start;
 }
-.right-column {
+.main-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+.summary-card {
+    width: 400px;
+    flex-shrink: 0;
 }
 .auction-section {
     min-height: 600px;
@@ -291,20 +562,25 @@ header p {
 }
 @media (max-width: 1200px) {
     .layout {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: center;
     }
-    .auction-section {
-        min-height: 400px;
+    .main-content {
+        max-width: 100%;
+        width: 100%;
     }
-    .auction-frame-container {
-        min-height: 400px;
+    .summary-card {
+        width: 100%;
+        max-width: 100%;
     }
 }
 .card {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-    padding: 16px 18px;
+    padding: 20px 24px;
+    width: 100%;
+    box-sizing: border-box;
 }
 .card h2 {
     margin: 0 0 8px;
@@ -316,39 +592,47 @@ header p {
     align-items: center;
     margin-bottom: 8px;
     gap: 12px;
+    flex-wrap: nowrap;
 }
 .card-header-with-button h2 {
     margin: 0;
     flex: 1;
+    min-width: 0;
 }
 .card-header-with-button .btn-edit-mode {
     flex-shrink: 0;
     white-space: nowrap;
+    min-width: fit-content;
 }
 .card small {
     color: #666;
 }
 .categories {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 .category {
     background: #f8f9fb;
     border-radius: 14px;
-    padding: 12px 12px 8px;
+    padding: 16px;
     border: 1px solid #e1e4eb;
+    width: 100%;
 }
 .category-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e1e4eb;
 }
 .category-header h3 {
     margin: 0;
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f4f7b;
 }
 .category-header span {
     font-size: 13px;
@@ -358,10 +642,11 @@ header p {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     font-size: 14px;
-    padding: 4px 0;
+    padding: 8px 0;
     border-bottom: 1px dashed #e1e4eb;
+    min-height: 40px;
 }
 .item:last-child {
     border-bottom: none;
@@ -369,8 +654,10 @@ header p {
 .item label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
+    flex: 1;
+    min-width: 0;
 }
 .item input[type="checkbox"] {
     width: 16px;
@@ -455,6 +742,9 @@ button {
     font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
+    min-width: fit-content;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 .btn-edit-mode:hover {
     background: #218838;
@@ -470,7 +760,7 @@ button {
     border: 2px dashed #1f4f7b;
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 .edit-form h3 {
     margin: 0 0 12px;
@@ -536,19 +826,51 @@ button {
 .edit-mode .item-price {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 .edit-mode .item-price input {
-    width: 100px;
-    padding: 4px 8px;
+    width: 110px;
+    padding: 6px 8px;
     border: 1px solid #e1e4eb;
     border-radius: 6px;
     font-size: 13px;
     text-align: right;
 }
+.edit-mode .item-name-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 10px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-left: 6px;
+}
+.edit-mode .item-name-input:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+.btn-dependencies {
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-dependencies:hover {
+    background: #138496;
+}
 .edit-mode .item-price input:focus {
     outline: none;
     border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
 }
 .edit-mode .category-header {
     position: relative;
@@ -568,22 +890,23 @@ button {
 }
 .edit-mode .add-item-form {
     background: #fff;
-    border: 1px dashed #28a745;
+    border: 2px dashed #28a745;
     border-radius: 8px;
-    padding: 10px;
-    margin-top: 8px;
+    padding: 12px;
+    margin-top: 12px;
 }
 .edit-mode .add-item-form input {
     width: 100%;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid #e1e4eb;
     border-radius: 6px;
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 14px;
+    margin-bottom: 8px;
 }
 .edit-mode .add-item-form .form-group {
     display: flex;
-    gap: 6px;
+    gap: 8px;
+    align-items: flex-end;
 }
 .edit-mode .add-item-form .form-group input {
     flex: 1;
@@ -608,8 +931,34 @@ button {
         align-items: flex-start;
         gap: 12px;
     }
-    .btn-edit-mode {
+    .card-header-with-button {
+        flex-wrap: nowrap;
+    }
+    .card-header-with-button h2 {
+        font-size: 16px;
+    }
+    .card-header-with-button .btn-edit-mode {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    .category {
+        padding: 12px;
+    }
+    .edit-mode .item {
+        flex-wrap: wrap;
+    }
+    .edit-mode .item-name-input {
+        min-width: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+    }
+    .edit-mode .item-price {
         width: 100%;
+        justify-content: flex-start;
+        margin-top: 8px;
     }
 }
 
