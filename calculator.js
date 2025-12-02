@@ -85,14 +85,21 @@ function initFirebase() {
             firebaseInitialized = true;
             console.log('Firebase ініціалізовано успішно');
             
-            // Налаштувати слухач для синхронізації даних
-            setupFirebaseListener();
+            // Налаштувати слухач для синхронізації даних (якщо currentCarId вже встановлено)
+            // Якщо ні, слухач буде налаштовано пізніше в DOMContentLoaded
+            if (currentCarId) {
+                setupFirebaseListener();
+            }
             return true;
         } else if (firebase.apps && firebase.apps.length > 0) {
             database = firebase.database();
             firebaseInitialized = true;
             console.log('Firebase вже ініціалізовано');
-            setupFirebaseListener();
+            
+            // Налаштувати слухач для синхронізації даних (якщо currentCarId вже встановлено)
+            if (currentCarId) {
+                setupFirebaseListener();
+            }
             return true;
         }
     } catch (error) {
@@ -136,10 +143,25 @@ function loadCarInfo(carId) {
 
 // Налаштування слухача Firebase для синхронізації в реальному часі
 function setupFirebaseListener() {
-    if (!firebaseInitialized || !database || !currentCarId) return;
+    if (!firebaseInitialized || !database) {
+        console.warn('Firebase не ініціалізовано або database не встановлено');
+        return;
+    }
+    
+    if (!currentCarId) {
+        console.warn('currentCarId не встановлено, не можу налаштувати слухача. Спробую пізніше...');
+        // Спробувати налаштувати слухача пізніше
+        setTimeout(() => {
+            if (currentCarId) {
+                setupFirebaseListener();
+            }
+        }, 1000);
+        return;
+    }
     
     try {
         categoriesRef = database.ref(`cars/${currentCarId}/categories`);
+        console.log('Налаштування слухача Firebase для:', `cars/${currentCarId}/categories`);
         
         // Слухач змін в базі даних
         categoriesRef.on('value', (snapshot) => {
@@ -279,6 +301,19 @@ async function saveCategoriesToFirebase() {
         // Якщо Firebase не налаштовано, використати localStorage
         saveCategories();
         return;
+    }
+    
+    // Перевірити, чи встановлено currentCarId
+    if (!currentCarId) {
+        console.warn('currentCarId не встановлено, не можу зберегти в Firebase');
+        saveCategories();
+        return;
+    }
+    
+    // Якщо categoriesRef не встановлено, встановити його
+    if (!categoriesRef) {
+        categoriesRef = database.ref(`cars/${currentCarId}/categories`);
+        console.log('categoriesRef встановлено:', `cars/${currentCarId}/categories`);
     }
     
     // Якщо вже синхронізуємо, не викликати знову
@@ -1865,6 +1900,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     // Спробувати ініціалізувати Firebase
     initFirebase();
+    
+    // Налаштувати слухача Firebase після встановлення currentCarId
+    if (firebaseInitialized && currentCarId) {
+        setupFirebaseListener();
+    }
     
     // Завантажити дані (з Firebase або localStorage)
     if (firebaseInitialized) {
