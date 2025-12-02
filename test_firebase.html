@@ -155,11 +155,18 @@
                 statusEl.textContent = '✅ Дані успішно записані в /test/connection';
             } catch (error) {
                 statusEl.className = 'status error';
-                statusEl.innerHTML = `❌ Помилка запису:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                let errorMsg = `❌ Помилка запису:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
                 
                 if (error.code === 'PERMISSION_DENIED') {
-                    statusEl.innerHTML += '<br><br>🔧 Проблема: Немає дозволу на запис. Перевірте правила безпеки в Firebase Console.';
+                    errorMsg += '<br><br><strong>🔧 РІШЕННЯ:</strong><br>';
+                    errorMsg += '1. Відкрийте <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a><br>';
+                    errorMsg += '2. Виберіть проект: <strong>remcar-a23dc</strong><br>';
+                    errorMsg += '3. Realtime Database → <strong>Rules</strong><br>';
+                    errorMsg += '4. Встановіть правила (див. FIREBASE_RULES_SETUP.md)<br>';
+                    errorMsg += '5. Натисніть <strong>"Publish"</strong>';
                 }
+                
+                statusEl.innerHTML = errorMsg;
             }
         }
 
@@ -197,7 +204,18 @@
                 }, null, 2);
             } catch (error) {
                 statusEl.className = 'status error';
-                statusEl.innerHTML = `❌ Помилка читання:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                let errorMsg = `❌ Помилка читання:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMsg += '<br><br><strong>🔧 РІШЕННЯ:</strong><br>';
+                    errorMsg += '1. Відкрийте <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a><br>';
+                    errorMsg += '2. Виберіть проект: <strong>remcar-a23dc</strong><br>';
+                    errorMsg += '3. Realtime Database → <strong>Rules</strong><br>';
+                    errorMsg += '4. Встановіть правила (див. FIREBASE_RULES_SETUP.md)<br>';
+                    errorMsg += '5. Натисніть <strong>"Publish"</strong>';
+                }
+                
+                statusEl.innerHTML = errorMsg;
                 dataEl.textContent = '';
             }
         }
@@ -239,11 +257,15 @@
                 
                 if (error.code === 'PERMISSION_DENIED') {
                     message += '<br><br>🔧 РІШЕННЯ:<br>';
-                    message += '1. Відкрийте Firebase Console<br>';
-                    message += '2. Realtime Database → Rules<br>';
-                    message += '3. Встановіть правила:<br>';
-                    message += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">{\n  "rules": {\n    "cars": {\n      ".read": true,\n      ".write": true\n    }\n  }\n}</pre>';
-                    message += '4. Натисніть "Publish"';
+                    message += '1. Відкрийте <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a><br>';
+                    message += '2. Виберіть проект: <strong>remcar-a23dc</strong><br>';
+                    message += '3. Realtime Database → <strong>Rules</strong> (вкладка)<br>';
+                    message += '4. Скопіюйте та вставте ці правила:<br>';
+                    message += '<pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 10px; text-align: left; max-width: 600px; overflow-x: auto;">{\n  "rules": {\n    "cars": {\n      ".read": true,\n      ".write": true,\n      "$carId": {\n        ".read": true,\n        ".write": true,\n        "categories": {\n          ".read": true,\n          ".write": true\n        }\n      }\n    },\n    "test": {\n      ".read": true,\n      ".write": true\n    }\n  }\n}</pre>';
+                    message += '5. Натисніть кнопку <strong>"Publish"</strong> (Опублікувати)<br>';
+                    message += '6. Дочекайтеся підтвердження "Rules published successfully"<br>';
+                    message += '7. Оновіть цю сторінку (F5) та спробуйте знову<br><br>';
+                    message += '📖 Детальна інструкція: відкрийте файл <strong>FIREBASE_RULES_SETUP.md</strong>';
                 }
                 
                 statusEl.innerHTML = message;
