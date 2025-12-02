@@ -58,16 +58,18 @@ function initFirebase() {
             firebase.initializeApp(config);
             database = firebase.database();
             firebaseInitialized = true;
+            console.log('✅ Firebase ініціалізовано успішно');
             setupFirebaseListener();
             return true;
         } else if (firebase.apps && firebase.apps.length > 0) {
             database = firebase.database();
             firebaseInitialized = true;
+            console.log('✅ Firebase вже ініціалізовано');
             setupFirebaseListener();
             return true;
         }
     } catch (error) {
-        console.warn('Помилка ініціалізації Firebase:', error);
+        console.error('❌ Помилка ініціалізації Firebase:', error);
         firebaseInitialized = false;
         return false;
     }
@@ -84,23 +86,27 @@ function setupFirebaseListener() {
         
         carsRef.on('value', (snapshot) => {
             if (isSyncingCars) {
-                console.log('Слухач Firebase: пропускаємо оновлення, бо isSyncingCars = true');
+                console.log('⏸️ Слухач Firebase: пропускаємо оновлення, бо isSyncingCars = true');
                 return; // Якщо ми самі зберігаємо, не оновлювати
             }
             
             const data = snapshot.val();
+            console.log('📥 Отримано дані з Firebase:', data);
+            
             if (data) {
                 const loadedCars = Object.keys(data).map(key => ({
                     id: key,
                     ...data[key]
                 }));
                 
+                console.log('📋 Завантажені автомобілі:', loadedCars);
+                
                 // Порівняти з поточними даними, щоб уникнути непотрібних оновлень
-                const currentCarsStr = JSON.stringify(cars);
-                const loadedCarsStr = JSON.stringify(loadedCars);
+                const currentCarsStr = JSON.stringify(cars.sort((a, b) => a.id.localeCompare(b.id)));
+                const loadedCarsStr = JSON.stringify(loadedCars.sort((a, b) => a.id.localeCompare(b.id)));
                 
                 if (currentCarsStr !== loadedCarsStr) {
-                    console.log('Дані списку автомобілів змінилися, оновлюємо...');
+                    console.log('🔄 Дані списку автомобілів змінилися, оновлюємо...');
                     isSyncingCars = true;
                     cars = loadedCars;
                     
@@ -111,10 +117,10 @@ function setupFirebaseListener() {
                     // Зняти прапорець через затримку
                     setTimeout(() => {
                         isSyncingCars = false;
-                        console.log('Синхронізацію списку автомобілів завершено, isSyncingCars = false');
+                        console.log('✅ Синхронізацію списку автомобілів завершено, isSyncingCars = false');
                     }, 1000);
                 } else {
-                    console.log('Дані списку автомобілів не змінилися, пропускаємо оновлення');
+                    console.log('✓ Дані списку автомобілів не змінилися, пропускаємо оновлення');
                 }
             } else {
                 // Якщо в Firebase немає даних, завантажити з localStorage
@@ -177,46 +183,56 @@ function loadCars() {
 
 // Збереження списку авто
 async function saveCars() {
+    console.log('🔄 saveCars() викликано, кількість автомобілів:', cars.length);
+    
     // Зберегти в localStorage одразу
     localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
+    console.log('✅ Дані збережено в localStorage');
     
     // Якщо Firebase не налаштовано, вийти
-    if (!firebaseInitialized || !database) {
-        console.log('Firebase не налаштовано, дані збережено тільки в localStorage');
+    if (!firebaseInitialized) {
+        console.warn('⚠️ Firebase не ініціалізовано, дані збережено тільки в localStorage');
+        return;
+    }
+    
+    if (!database) {
+        console.warn('⚠️ Database не встановлено, дані збережено тільки в localStorage');
         return;
     }
     
     // Якщо вже синхронізуємо, не викликати знову
     if (isSyncingCars) {
-        console.log('Вже виконується синхронізація списку автомобілів, пропускаємо...');
+        console.log('⏸️ Вже виконується синхронізація списку автомобілів, пропускаємо...');
         return;
     }
     
     // Якщо carsRef не встановлено, встановити його
     if (!carsRef) {
         carsRef = database.ref('cars');
-        console.log('carsRef встановлено: cars');
+        console.log('✅ carsRef встановлено: cars');
     }
     
     try {
         isSyncingCars = true;
-        console.log('Збереження списку автомобілів в Firebase...');
+        console.log('📤 Збереження списку автомобілів в Firebase...', cars);
         
         const carsObj = {};
         cars.forEach(car => {
             carsObj[car.id] = { brand: car.brand, model: car.model };
         });
         
+        console.log('📦 Дані для збереження:', carsObj);
         await carsRef.set(carsObj);
-        console.log('Список автомобілів збережено в Firebase');
+        console.log('✅ Список автомобілів збережено в Firebase');
         
         // Зняти прапорець через затримку
         setTimeout(() => {
             isSyncingCars = false;
-            console.log('Синхронізацію списку автомобілів завершено, isSyncingCars = false');
+            console.log('✅ Синхронізацію списку автомобілів завершено, isSyncingCars = false');
         }, 1500);
     } catch (error) {
-        console.error('Помилка збереження списку автомобілів в Firebase:', error);
+        console.error('❌ Помилка збереження списку автомобілів в Firebase:', error);
+        console.error('Деталі помилки:', error.message, error.stack);
         isSyncingCars = false;
     }
 }
@@ -323,7 +339,13 @@ function addCar(brand, model, copyFromCarId = null) {
     };
     
     cars.push(newCar);
-    saveCars();
+    
+    // Зберегти в Firebase (асинхронно)
+    saveCars().then(() => {
+        console.log('Автомобіль додано та збережено в Firebase');
+    }).catch(error => {
+        console.error('Помилка збереження автомобіля:', error);
+    });
     
     // Якщо вказано авто для копіювання налаштувань
     if (copyFromCarId) {
@@ -391,7 +413,14 @@ async function deleteCar(carId) {
     if (confirm('Ви впевнені, що хочете видалити цей автомобіль? Всі дані про ремонт також будуть видалені.')) {
         // Видалити з масиву
         cars = cars.filter(car => car.id !== carId);
-        saveCars();
+        
+        // Зберегти в Firebase (асинхронно)
+        saveCars().then(() => {
+            console.log('Автомобіль видалено та збережено в Firebase');
+        }).catch(error => {
+            console.error('Помилка збереження після видалення:', error);
+        });
+        
         renderCars();
         
         // Видалити дані категорій з localStorage
@@ -536,13 +565,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyTheme(currentTheme);
     
     // Ініціалізувати Firebase
-    initFirebase();
+    const firebaseInitResult = initFirebase();
+    console.log('🔧 Результат ініціалізації Firebase:', firebaseInitResult);
     
     // Завантажити список авто
     if (!firebaseInitialized) {
+        console.log('⚠️ Firebase не ініціалізовано, завантаження з localStorage');
         loadCars();
+        renderCars();
+    } else {
+        console.log('✅ Firebase ініціалізовано, очікування даних з сервера...');
+        // Дані будуть завантажені через слухача Firebase
+        // Але якщо слухач не спрацює, завантажити з localStorage
+        setTimeout(() => {
+            if (cars.length === 0) {
+                console.log('⚠️ Дані не завантажилися з Firebase, завантаження з localStorage');
+                loadCars();
+                renderCars();
+            }
+        }, 2000);
     }
-    renderCars();
     
     // Обробники подій
     const themeToggleBtn = document.getElementById('themeToggleBtn');
