@@ -342,7 +342,21 @@ async function saveCategoriesToFirebase() {
         }, 1500); // Збільшено до 1.5 секунди
     } catch (error) {
         console.error('Помилка збереження в Firebase:', error);
-        showSyncStatus('Помилка синхронізації. Використовується локальне збереження.', false);
+        
+        // Перевірити, чи це помилка правил безпеки
+        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission') || error.message.includes('Permission')) {
+            console.error('🚨 ПОМИЛКА: Немає дозволу на запис в Firebase!');
+            console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
+            console.error('   1. Відкрийте https://console.firebase.google.com/');
+            console.error('   2. Виберіть проект remcar-a23dc');
+            console.error('   3. Realtime Database → Rules');
+            console.error('   4. Встановіть правила: { "rules": { "cars": { ".read": true, ".write": true, "$carId": { "categories": { ".read": true, ".write": true } } } } }');
+            console.error('   5. Натисніть "Publish"');
+            showSyncStatus('Помилка: Немає дозволу на запис. Перевірте правила Firebase. Деталі в консолі (F12).', false);
+        } else {
+            showSyncStatus('Помилка синхронізації. Використовується локальне збереження.', false);
+        }
+        
         // У випадку помилки зберегти в localStorage
         saveCategories();
         isSyncing = false;

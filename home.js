@@ -233,6 +233,19 @@ async function saveCars() {
     } catch (error) {
         console.error('❌ Помилка збереження списку автомобілів в Firebase:', error);
         console.error('Деталі помилки:', error.message, error.stack);
+        
+        // Перевірити, чи це помилка правил безпеки
+        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission') || error.message.includes('Permission')) {
+            console.error('🚨 ПОМИЛКА: Немає дозволу на запис в Firebase!');
+            console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
+            console.error('   1. Відкрийте https://console.firebase.google.com/');
+            console.error('   2. Виберіть проект remcar-a23dc');
+            console.error('   3. Realtime Database → Rules');
+            console.error('   4. Встановіть правила: { "rules": { "cars": { ".read": true, ".write": true } } }');
+            console.error('   5. Натисніть "Publish"');
+            alert('Помилка: Немає дозволу на запис в Firebase. Перевірте правила безпеки в Firebase Console. Деталі в консолі (F12).');
+        }
+        
         isSyncingCars = false;
     }
 }
