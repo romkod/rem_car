@@ -1,6 +1,13 @@
 // Змінна для відстеження режиму редагування
 let editMode = false;
 
+// Налаштування теми
+let currentTheme = localStorage.getItem('selectedTheme') || 'light';
+
+// Курс валют (USD/UAH)
+let exchangeRate = 37; // За замовчуванням, буде оновлено з API
+let exchangeRateLastUpdate = null;
+
 // SHA-256 хеш пароля "vasil" (хеш зберігається замість відкритого пароля)
 // Це хеш від слова "vasil" у форматі SHA-256
 // Правильний хеш обчислюється при завантаженні для безпеки
@@ -258,7 +265,21 @@ function loadCategories() {
     const saved = localStorage.getItem('repairCalculatorCategories');
     if (saved) {
         try {
-            return JSON.parse(saved);
+            const loaded = JSON.parse(saved);
+            // Ініціалізувати dependencies та currency для старих даних
+            loaded.forEach(cat => {
+                if (cat.items) {
+                    cat.items.forEach(item => {
+                        if (!item.dependencies) {
+                            item.dependencies = [];
+                        }
+                        if (!item.currency) {
+                            item.currency = 'USD';
+                        }
+                    });
+                }
+            });
+            return loaded;
         } catch (e) {
             console.error('Помилка завантаження даних:', e);
         }
@@ -371,7 +392,7 @@ function renderCategories() {
 
         const sumSpan = document.createElement("span");
         sumSpan.id = `subtotal-${cat.id}`;
-        sumSpan.textContent = "0 грн";
+        sumSpan.textContent = formatCurrency(0);
         headerRight.appendChild(sumSpan);
 
         // Кнопка видалення категорії (тільки в режимі редагування)
@@ -387,6 +408,15 @@ function renderCategories() {
         catDiv.appendChild(header);
 
         cat.items.forEach(item => {
+            // Ініціалізувати dependencies, якщо їх немає
+            if (!item.dependencies) {
+                item.dependencies = [];
+            }
+            // Ініціалізувати валюту елемента (за замовчуванням USD)
+            if (!item.currency) {
+                item.currency = 'USD';
+            }
+
             const itemDiv = document.createElement("div");
             itemDiv.className = "item";
 
@@ -398,10 +428,46 @@ function renderCategories() {
             checkbox.id = item.id;
             checkbox.dataset.price = item.price;
             checkbox.dataset.categoryId = cat.id;
+            checkbox.dataset.itemId = item.id;
             checkbox.disabled = editMode; // Вимкнути чекбокси в режимі редагування
+            
+            // Обробник вибору з автоматичним вибором залежностей
+            checkbox.addEventListener("change", (e) => {
+                if (e.target.checked && item.dependencies && item.dependencies.length > 0) {
+                    // Автоматично вибрати залежні елементи
+                    item.dependencies.forEach(depId => {
+                        const depCheckbox = document.getElementById(depId);
+                        if (depCheckbox && !depCheckbox.checked) {
+                            depCheckbox.checked = true;
+                            depCheckbox.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
+                updateTotals();
+            });
 
             label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(item.name));
+            
+            if (editMode) {
+                // В режимі редагування показуємо input для редагування назви
+                const nameInput = document.createElement("input");
+                nameInput.type = "text";
+                nameInput.value = item.name;
+                nameInput.className = "item-name-input";
+                nameInput.dataset.itemId = item.id;
+                nameInput.dataset.categoryId = cat.id;
+                nameInput.addEventListener("blur", (e) => {
+                    updateItemName(cat.id, item.id, e.target.value);
+                });
+                nameInput.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") {
+                        e.target.blur();
+                    }
+                });
+                label.appendChild(nameInput);
+            } else {
+                label.appendChild(document.createTextNode(item.name));
+            }
 
             const priceSpan = document.createElement("span");
             priceSpan.className = "item-price";
@@ -410,16 +476,94 @@ function renderCategories() {
                 // В режимі редагування показуємо input для редагування ціни
                 const priceInput = document.createElement("input");
                 priceInput.type = "number";
-                priceInput.value = item.price;
+                // Відобразити ціну в валюті елемента
+                const displayPrice = item.currency === 'UAH' ? item.price : item.price;
+                priceInput.value = displayPrice;
                 priceInput.min = "0";
-                priceInput.step = "100";
+                priceInput.step = item.currency === 'UAH' ? "1" : "100";
+                priceInput.className = "item-price-input";
                 priceInput.dataset.itemId = item.id;
                 priceInput.dataset.categoryId = cat.id;
-                priceInput.addEventListener("change", (e) => {
-                    updateItemPrice(cat.id, item.id, Number(e.target.value));
+                priceInput.dataset.currency = item.currency;
+                
+                // Вибір валюти
+                const currencySelect = document.createElement("select");
+                currencySelect.className = "item-currency-select";
+                currencySelect.dataset.itemId = item.id;
+                currencySelect.dataset.categoryId = cat.id;
+                
+                const usdOption = document.createElement("option");
+                usdOption.value = "USD";
+                usdOption.textContent = "USD ($)";
+                if (item.currency === 'USD') usdOption.selected = true;
+                
+                const uahOption = document.createElement("option");
+                uahOption.value = "UAH";
+                uahOption.textContent = "UAH (₴)";
+                if (item.currency === 'UAH') uahOption.selected = true;
+                
+                currencySelect.appendChild(usdOption);
+                currencySelect.appendChild(uahOption);
+                
+                // Обробник зміни валюти
+                currencySelect.addEventListener("change", (e) => {
+                    const newCurrency = e.target.value;
+                    const category = categories.find(c => c.id === cat.id);
+                    const itemToUpdate = category ? category.items.find(it => it.id === item.id) : null;
+                    if (itemToUpdate) {
+                        const oldCurrency = itemToUpdate.currency;
+                        itemToUpdate.currency = newCurrency;
+                        
+                        // Конвертувати ціну при зміні валюти
+                        if (oldCurrency === 'UAH' && newCurrency === 'USD') {
+                            // З UAH в USD
+                            itemToUpdate.price = Math.round(Number(priceInput.value) / exchangeRate);
+                            priceInput.value = itemToUpdate.price;
+                        } else if (oldCurrency === 'USD' && newCurrency === 'UAH') {
+                            // З USD в UAH
+                            itemToUpdate.price = Math.round(Number(priceInput.value) * exchangeRate);
+                            priceInput.value = itemToUpdate.price;
+                        }
+                        
+                        priceInput.step = newCurrency === 'UAH' ? "1" : "100";
+                        saveCategories();
+                        updateTotals();
+                    }
                 });
+                
+                // Обробник зміни ціни з автоматичною конвертацією
+                priceInput.addEventListener("change", (e) => {
+                    const inputValue = Number(e.target.value);
+                    const category = categories.find(c => c.id === cat.id);
+                    const itemToUpdate = category ? category.items.find(it => it.id === item.id) : null;
+                    if (itemToUpdate) {
+                        if (itemToUpdate.currency === 'UAH') {
+                            // Конвертувати з UAH в USD для збереження
+                            itemToUpdate.price = Math.round(inputValue / exchangeRate);
+                        } else {
+                            // Вже в USD
+                            itemToUpdate.price = Math.round(inputValue);
+                        }
+                        // Оновити data-price в чекбоксі
+                        const checkbox = document.getElementById(item.id);
+                        if (checkbox) {
+                            checkbox.dataset.price = itemToUpdate.price;
+                        }
+                        saveCategories();
+                        updateTotals();
+                    }
+                });
+                
                 priceSpan.appendChild(priceInput);
-                priceSpan.appendChild(document.createTextNode(" грн"));
+                priceSpan.appendChild(currencySelect);
+
+                // Кнопка налаштування залежностей
+                const depsBtn = document.createElement("button");
+                depsBtn.className = "btn-dependencies";
+                depsBtn.textContent = "🔗";
+                depsBtn.title = "Налаштувати залежності";
+                depsBtn.onclick = () => showDependenciesModal(cat.id, item.id);
+                priceSpan.appendChild(depsBtn);
 
                 // Кнопка видалення елемента
                 const deleteBtn = document.createElement("button");
@@ -484,10 +628,12 @@ function renderCategories() {
         // Рядок підсумку по категорії в правій колонці
         const row = document.createElement("div");
         row.className = "summary-row";
-        row.innerHTML = `
-            <span class="label">${cat.name}</span>
-            <span class="value" id="summary-${cat.id}">0 грн</span>
-        `;
+        const valueSpan = document.createElement("span");
+        valueSpan.className = "value";
+        valueSpan.id = `summary-${cat.id}`;
+        valueSpan.textContent = formatCurrency(0);
+        row.innerHTML = `<span class="label">${cat.name}</span>`;
+        row.appendChild(valueSpan);
         summaryByCategory.appendChild(row);
     });
 
@@ -497,9 +643,90 @@ function renderCategories() {
     });
 }
 
-// Форматування суми
+// Отримання курсу валют з API Мінфін
+async function fetchExchangeRate() {
+    try {
+        // Використовуємо API Мінфін для отримання курсу USD/UAH
+        // Спробуємо публічний endpoint міжбанківського курсу
+        const response = await fetch('https://api.minfin.com.ua/mb/');
+        const data = await response.json();
+        
+        // Знайти курс USD (може бути 'usd' або 'USD')
+        const usdRate = data.find(rate => 
+            (rate.currency && rate.currency.toLowerCase() === 'usd') ||
+            (rate.code && rate.code.toLowerCase() === 'usd')
+        );
+        if (usdRate && (usdRate.ask || usdRate.rate || usdRate.bid)) {
+            exchangeRate = parseFloat(usdRate.ask || usdRate.rate || usdRate.bid);
+            exchangeRateLastUpdate = new Date();
+            updateExchangeRateDisplay();
+            return exchangeRate;
+        }
+    } catch (error) {
+        console.warn('Помилка отримання курсу валют з Мінфін API:', error);
+        // Спробувати альтернативний метод через CORS проксі
+        try {
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://minfin.com.ua/ua/currency/');
+            const response = await fetch(proxyUrl);
+            const html = await response.text();
+            
+            // Парсити HTML для отримання курсу USD
+            // Шукаємо курс у форматі "XX.XX" або "XX,XX"
+            const patterns = [
+                /USD.*?(\d{2,3}[.,]\d{2})/i,
+                /долар.*?(\d{2,3}[.,]\d{2})/i,
+                /"usd".*?(\d{2,3}[.,]\d{2})/i,
+                /міжбанк.*?USD.*?(\d{2,3}[.,]\d{2})/i
+            ];
+            
+            for (const pattern of patterns) {
+                const match = html.match(pattern);
+                if (match) {
+                    const foundRate = parseFloat(match[1].replace(',', '.'));
+                    if (foundRate > 20 && foundRate < 100) { // Валідація курсу
+                        exchangeRate = foundRate;
+                        exchangeRateLastUpdate = new Date();
+                        updateExchangeRateDisplay();
+                        return exchangeRate;
+                    }
+                }
+            }
+        } catch (proxyError) {
+            console.warn('Помилка через проксі:', proxyError);
+        }
+        
+        // Використати збережений курс або дефолтний
+        const savedRate = localStorage.getItem('exchangeRate');
+        if (savedRate) {
+            exchangeRate = parseFloat(savedRate);
+        } else {
+            // Дефолтний курс якщо нічого не знайдено
+            exchangeRate = 37.0;
+        }
+    }
+    updateExchangeRateDisplay();
+    return exchangeRate;
+}
+
+// Оновити відображення курсу валют
+function updateExchangeRateDisplay() {
+    const rateElement = document.getElementById('exchangeRateText');
+    if (rateElement) {
+        const formattedRate = exchangeRate.toFixed(2);
+        const updateTime = exchangeRateLastUpdate 
+            ? ` (оновлено ${exchangeRateLastUpdate.toLocaleTimeString('uk-UA')})`
+            : '';
+        rateElement.textContent = `Курс USD/UAH: ${formattedRate}${updateTime}`;
+        localStorage.setItem('exchangeRate', exchangeRate.toString());
+    }
+}
+
+// Форматування суми (завжди в USD)
 function formatCurrency(value) {
-    return value.toLocaleString("uk-UA") + " грн";
+    return value.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }) + ' $';
 }
 
 // Перерахунок підсумків
@@ -704,13 +931,40 @@ function addItem(categoryId, name, price) {
         const newItem = {
             id: generateId("item"),
             name: name.trim(),
-            price: Math.round(price)
+            price: Math.round(price),
+            currency: 'USD', // За замовчуванням USD
+            dependencies: [] // Ініціалізувати порожній масив залежностей
         };
         
         category.items.push(newItem);
         saveCategories();
         renderCategories();
         updateTotals();
+    }
+}
+
+// Оновлення назви елемента
+function updateItemName(categoryId, itemId, newName) {
+    if (!newName || !newName.trim()) {
+        alert("Назва не може бути порожньою");
+        return;
+    }
+    
+    const category = categories.find(cat => cat.id === categoryId);
+    if (category) {
+        const item = category.items.find(it => it.id === itemId);
+        if (item) {
+            item.name = newName.trim();
+            saveCategories();
+            // Оновити відображення без повного перерендеру
+            const label = document.querySelector(`label[for="${itemId}"]`);
+            if (label && editMode) {
+                const nameInput = label.querySelector('.item-name-input');
+                if (nameInput) {
+                    nameInput.value = item.name;
+                }
+            }
+        }
     }
 }
 
@@ -726,6 +980,11 @@ function updateItemPrice(categoryId, itemId, newPrice) {
         const item = category.items.find(it => it.id === itemId);
         if (item) {
             item.price = Math.round(newPrice);
+            // Оновити data-price в чекбоксі
+            const checkbox = document.getElementById(itemId);
+            if (checkbox) {
+                checkbox.dataset.price = item.price;
+            }
             saveCategories(); // Це викличе saveCategoriesToFirebase якщо Firebase налаштовано
             updateTotals();
         }
@@ -738,6 +997,16 @@ function deleteItem(categoryId, itemId) {
         const category = categories.find(cat => cat.id === categoryId);
         if (category) {
             category.items = category.items.filter(item => item.id !== itemId);
+            
+            // Видалити посилання на цей елемент з залежностей інших елементів
+            categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (item.dependencies && item.dependencies.includes(itemId)) {
+                        item.dependencies = item.dependencies.filter(depId => depId !== itemId);
+                    }
+                });
+            });
+            
             saveCategories();
             renderCategories();
             updateTotals();
@@ -745,11 +1014,125 @@ function deleteItem(categoryId, itemId) {
     }
 }
 
+// Змінні для модального вікна залежностей
+let currentEditingItemId = null;
+let currentEditingCategoryId = null;
+
+// Показати модальне вікно для налаштування залежностей
+function showDependenciesModal(categoryId, itemId) {
+    const modal = document.getElementById("dependenciesModal");
+    const dependenciesList = document.getElementById("dependenciesList");
+    const category = categories.find(cat => cat.id === categoryId);
+    const item = category ? category.items.find(it => it.id === itemId) : null;
+    
+    if (!item) return;
+    
+    currentEditingItemId = itemId;
+    currentEditingCategoryId = categoryId;
+    
+    // Очистити список
+    dependenciesList.innerHTML = "";
+    
+    // Створити список всіх елементів (крім поточного)
+    categories.forEach(cat => {
+        cat.items.forEach(otherItem => {
+            if (otherItem.id !== itemId) {
+                const itemDiv = document.createElement("div");
+                itemDiv.style.display = "flex";
+                itemDiv.style.alignItems = "center";
+                itemDiv.style.gap = "8px";
+                itemDiv.style.padding = "8px";
+                itemDiv.style.borderBottom = "1px solid #e1e4eb";
+                
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = `dep-${otherItem.id}`;
+                checkbox.checked = item.dependencies && item.dependencies.includes(otherItem.id);
+                
+                const label = document.createElement("label");
+                label.setAttribute("for", `dep-${otherItem.id}`);
+                label.style.cursor = "pointer";
+                label.style.flex = "1";
+                label.innerHTML = `<strong>${cat.name}</strong> - ${otherItem.name}`;
+                
+                itemDiv.appendChild(checkbox);
+                itemDiv.appendChild(label);
+                dependenciesList.appendChild(itemDiv);
+            }
+        });
+    });
+    
+    if (dependenciesList.children.length === 0) {
+        dependenciesList.innerHTML = "<p style='text-align: center; color: #666; padding: 20px;'>Немає інших елементів для налаштування залежностей</p>";
+    }
+    
+    modal.style.display = "flex";
+}
+
+// Приховати модальне вікно залежностей
+function hideDependenciesModal() {
+    const modal = document.getElementById("dependenciesModal");
+    modal.style.display = "none";
+    currentEditingItemId = null;
+    currentEditingCategoryId = null;
+}
+
+// Зберегти залежності
+function saveDependencies() {
+    if (!currentEditingItemId || !currentEditingCategoryId) return;
+    
+    const category = categories.find(cat => cat.id === currentEditingCategoryId);
+    const item = category ? category.items.find(it => it.id === currentEditingItemId) : null;
+    
+    if (!item) return;
+    
+    // Зібрати вибрані залежності
+    const selectedDependencies = [];
+    categories.forEach(cat => {
+        cat.items.forEach(otherItem => {
+            if (otherItem.id !== currentEditingItemId) {
+                const checkbox = document.getElementById(`dep-${otherItem.id}`);
+                if (checkbox && checkbox.checked) {
+                    selectedDependencies.push(otherItem.id);
+                }
+            }
+        });
+    });
+    
+    item.dependencies = selectedDependencies;
+    saveCategories();
+    hideDependenciesModal();
+}
+
+// Застосувати тему
+function applyTheme(theme) {
+    document.body.className = document.body.className.replace(/theme-\w+/g, '');
+    document.body.classList.add(`theme-${theme}`);
+    currentTheme = theme;
+    localStorage.setItem('selectedTheme', theme);
+}
+
+// Перемкнути тему (між світлою та темною)
+function toggleTheme() {
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(newTheme);
+}
+
 // Ініціалізація
 document.addEventListener("DOMContentLoaded", async () => {
     // Обчислити правильний хеш для "vasil" та зберегти його
     PASSWORD_HASH = await hashPassword('vasil');
     console.log('SHA-256 хеш для "vasil" встановлено:', PASSWORD_HASH);
+    
+    // Застосувати збережену тему
+    applyTheme(currentTheme);
+    
+    // Завантажити курс валют
+    const savedRate = localStorage.getItem('exchangeRate');
+    if (savedRate) {
+        exchangeRate = parseFloat(savedRate);
+    }
+    fetchExchangeRate();
     
     // Спробувати ініціалізувати Firebase
     initFirebase();
@@ -787,11 +1170,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
     
-    document.getElementById("proxySettingsModal").addEventListener("click", (e) => {
-        if (e.target.id === "proxySettingsModal") {
-            hideProxySettings();
-        }
-    });
+    // Обробники модального вікна залежностей
+    const dependenciesModal = document.getElementById("dependenciesModal");
+    if (dependenciesModal) {
+        dependenciesModal.addEventListener("click", (e) => {
+            if (e.target.id === "dependenciesModal") {
+                hideDependenciesModal();
+            }
+        });
+    }
+    
+    const btnSaveDependencies = document.getElementById("btnSaveDependencies");
+    const btnCancelDependencies = document.getElementById("btnCancelDependencies");
+    if (btnSaveDependencies) {
+        btnSaveDependencies.addEventListener("click", saveDependencies);
+    }
+    if (btnCancelDependencies) {
+        btnCancelDependencies.addEventListener("click", hideDependenciesModal);
+    }
+    
+    // Обробник перемикання теми
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", toggleTheme);
+    }
     
     // Обробник додавання категорії
     document.getElementById("btnAddCategory").addEventListener("click", () => {
