@@ -334,30 +334,41 @@ async function saveCategoriesToFirebase() {
         console.log('categoriesRef встановлено:', `cars/${currentCarId}/categories`);
     }
     
-    // Якщо вже синхронізуємо, не викликати знову
+    // Якщо вже синхронізуємо, почекати трохи і спробувати знову
     if (isSyncing) {
-        console.log('Вже виконується синхронізація, пропускаємо...');
+        console.log('⏸️ Вже виконується синхронізація, чекаю...');
+        // Зачекати трохи і спробувати знову
+        setTimeout(() => {
+            if (!isSyncing) {
+                saveCategoriesToFirebase();
+            } else {
+                console.warn('⚠️ Синхронізація все ще виконується, зберігаю в localStorage');
+                saveCategories();
+            }
+        }, 500);
         return;
     }
     
     try {
         isSyncing = true; // Встановити прапорець, щоб не викликати слухача
+        console.log('📤 Початок збереження категорій в Firebase...');
         showSyncStatus('Збереження змін...', false);
         
         // Зберегти поточний стан для порівняння
         const dataToSave = JSON.parse(JSON.stringify(categories));
+        console.log('📦 Дані для збереження:', dataToSave.length, 'категорій');
         
         await categoriesRef.set(dataToSave);
         // Також зберегти в localStorage як резерв
         localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
-        console.log('Дані збережено в Firebase');
+        console.log('✅ Дані збережено в Firebase та localStorage');
         showSyncStatus('Зміни збережено та синхронізовано', true);
         
         // Зняти прапорець через більшу затримку, щоб слухач не спрацював
         setTimeout(() => {
             isSyncing = false;
-            console.log('Синхронізацію завершено, isSyncing = false');
-        }, 1500); // Збільшено до 1.5 секунди
+            console.log('✅ Синхронізацію завершено, isSyncing = false');
+        }, 2000); // Збільшено до 2 секунд для надійності
     } catch (error) {
         console.error('Помилка збереження в Firebase:', error);
         
@@ -1520,7 +1531,13 @@ function addCategory(name) {
     };
     
     categories.push(newCategory);
-    saveCategories(); // Це викличе saveCategoriesToFirebase якщо Firebase налаштовано
+    saveCategories(); // Зберегти в localStorage
+    // Зберегти в Firebase
+    if (firebaseInitialized && !isSyncing) {
+        saveCategoriesToFirebase().catch(err => {
+            console.error('Помилка збереження категорії в Firebase:', err);
+        });
+    }
     renderCategories();
     updateTotals();
 }
@@ -1531,7 +1548,13 @@ function deleteCategory(categoryId) {
         categories = categories.filter(cat => cat.id !== categoryId);
         // Видалити збережений стан згортання
         localStorage.removeItem(`category-${categoryId}-collapsed`);
-        saveCategories();
+        saveCategories(); // Зберегти в localStorage
+        // Зберегти в Firebase
+        if (firebaseInitialized && !isSyncing) {
+            saveCategoriesToFirebase().catch(err => {
+                console.error('Помилка збереження після видалення категорії в Firebase:', err);
+            });
+        }
         renderCategories();
         updateTotals();
     }
@@ -1593,7 +1616,13 @@ function addItem(categoryId, name, prices) {
         };
         
         category.items.push(newItem);
-        saveCategories();
+        saveCategories(); // Зберегти в localStorage
+        // Зберегти в Firebase
+        if (firebaseInitialized && !isSyncing) {
+            saveCategoriesToFirebase().catch(err => {
+                console.error('Помилка збереження елемента в Firebase:', err);
+            });
+        }
         renderCategories();
         updateTotals();
     }
@@ -1657,7 +1686,13 @@ function updateItemPrice(categoryId, itemId, newPrice) {
             if (checkbox) {
                 checkbox.dataset.price = item.price;
             }
-            saveCategories();
+            saveCategories(); // Зберегти в localStorage
+            // Зберегти в Firebase
+            if (firebaseInitialized && !isSyncing) {
+                saveCategoriesToFirebase().catch(err => {
+                    console.error('Помилка збереження ціни в Firebase:', err);
+                });
+            }
             updateTotals();
         }
     }
@@ -1679,7 +1714,13 @@ function deleteItem(categoryId, itemId) {
                 });
             });
             
-            saveCategories();
+            saveCategories(); // Зберегти в localStorage
+            // Зберегти в Firebase
+            if (firebaseInitialized && !isSyncing) {
+                saveCategoriesToFirebase().catch(err => {
+                    console.error('Помилка збереження після видалення елемента в Firebase:', err);
+                });
+            }
             renderCategories();
             updateTotals();
         }
