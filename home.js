@@ -136,6 +136,33 @@ function setupFirebaseListener() {
                 
                 if (currentCarsStr !== loadedCarsStr) {
                     console.log('🔄 Дані списку автомобілів змінилися, оновлюємо...');
+                    
+                    // Перевірити, чи нові дані містять більше авто (не втрачаємо локальні зміни)
+                    const localCarsIds = new Set(cars.map(c => c.id));
+                    const loadedCarsIds = new Set(loadedCars.map(c => c.id));
+                    
+                    // Якщо локально є авто, яких немає в завантажених, зберегти їх
+                    const missingCars = cars.filter(c => !loadedCarsIds.has(c.id));
+                    if (missingCars.length > 0) {
+                        console.log('⚠️ Знайдено локальні авто, яких немає в Firebase, зберігаємо їх:', missingCars);
+                        // Додати відсутні авто до завантажених
+                        loadedCars.push(...missingCars);
+                        // Зберегти оновлені дані назад в Firebase
+                        const carsObj = {};
+                        loadedCars.forEach(car => {
+                            carsObj[car.id] = { brand: car.brand, model: car.model };
+                        });
+                        // Зберегти без виклику слухача (встановити isSyncingCars)
+                        isSyncingCars = true;
+                        carsRef.set(carsObj).then(() => {
+                            console.log('✅ Локальні авто збережено в Firebase');
+                            setTimeout(() => { isSyncingCars = false; }, 2000);
+                        }).catch(err => {
+                            console.error('❌ Помилка збереження локальних авто:', err);
+                            isSyncingCars = false;
+                        });
+                    }
+                    
                     isSyncingCars = true;
                     cars = loadedCars;
                     
@@ -147,7 +174,7 @@ function setupFirebaseListener() {
                     setTimeout(() => {
                         isSyncingCars = false;
                         console.log('✅ Синхронізацію списку автомобілів завершено, isSyncingCars = false');
-                    }, 1000);
+                    }, 2000);
                 } else {
                     console.log('✓ Дані списку автомобілів не змінилися, пропускаємо оновлення');
                 }
@@ -210,6 +237,9 @@ function loadCars() {
     ];
 }
 
+// Змінна для відстеження черги збереження
+let saveCarsPromise = null;
+
 // Збереження списку авто
 async function saveCars() {
     console.log('🔄 saveCars() викликано, кількість автомобілів:', cars.length);
@@ -229,7 +259,15 @@ async function saveCars() {
         return;
     }
     
-    // Якщо вже синхронізуємо, не викликати знову
+    // Якщо вже виконується збереження, додати до черги
+    if (saveCarsPromise) {
+        console.log('⏸️ Вже виконується збереження, очікую завершення...');
+        await saveCarsPromise;
+        // Після завершення попереднього збереження, зберегти знову з актуальними даними
+        return saveCars();
+    }
+    
+    // Якщо вже синхронізуємо через слухача, не викликати знову
     if (isSyncingCars) {
         console.log('⏸️ Вже виконується синхронізація списку автомобілів, пропускаємо...');
         return;
@@ -241,42 +279,51 @@ async function saveCars() {
         console.log('✅ carsRef встановлено: cars');
     }
     
-    try {
-        isSyncingCars = true;
-        console.log('📤 Збереження списку автомобілів в Firebase...', cars);
-        
-        const carsObj = {};
-        cars.forEach(car => {
-            carsObj[car.id] = { brand: car.brand, model: car.model };
-        });
-        
-        console.log('📦 Дані для збереження:', carsObj);
-        await carsRef.set(carsObj);
-        console.log('✅ Список автомобілів збережено в Firebase');
-        
-        // Зняти прапорець через затримку
-        setTimeout(() => {
+    // Створити Promise для відстеження
+    saveCarsPromise = (async () => {
+        try {
+            isSyncingCars = true;
+            console.log('📤 Збереження списку автомобілів в Firebase...', cars);
+            
+            const carsObj = {};
+            cars.forEach(car => {
+                carsObj[car.id] = { brand: car.brand, model: car.model };
+            });
+            
+            console.log('📦 Дані для збереження:', carsObj);
+            await carsRef.set(carsObj);
+            console.log('✅ Список автомобілів збережено в Firebase');
+            
+            // Зняти прапорець через затримку (збільшено до 2.5 секунд для надійності)
+            setTimeout(() => {
+                isSyncingCars = false;
+                console.log('✅ Синхронізацію списку автомобілів завершено, isSyncingCars = false');
+            }, 2500);
+        } catch (error) {
+            console.error('❌ Помилка збереження списку автомобілів в Firebase:', error);
+            console.error('Деталі помилки:', error.message, error.stack);
+            
+            // Перевірити, чи це помилка правил безпеки
+            if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission') || error.message.includes('Permission')) {
+                console.error('🚨 ПОМИЛКА: Немає дозволу на запис в Firebase!');
+                console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
+                console.error('   1. Відкрийте https://console.firebase.google.com/');
+                console.error('   2. Виберіть проект remcar-a23dc');
+                console.error('   3. Realtime Database → Rules');
+                console.error('   4. Встановіть правила: { "rules": { "cars": { ".read": true, ".write": true } } }');
+                console.error('   5. Натисніть "Publish"');
+                alert('Помилка: Немає дозволу на запис в Firebase. Перевірте правила безпеки в Firebase Console. Деталі в консолі (F12).');
+            }
+            
             isSyncingCars = false;
-            console.log('✅ Синхронізацію списку автомобілів завершено, isSyncingCars = false');
-        }, 1500);
-    } catch (error) {
-        console.error('❌ Помилка збереження списку автомобілів в Firebase:', error);
-        console.error('Деталі помилки:', error.message, error.stack);
-        
-        // Перевірити, чи це помилка правил безпеки
-        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission') || error.message.includes('Permission')) {
-            console.error('🚨 ПОМИЛКА: Немає дозволу на запис в Firebase!');
-            console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
-            console.error('   1. Відкрийте https://console.firebase.google.com/');
-            console.error('   2. Виберіть проект remcar-a23dc');
-            console.error('   3. Realtime Database → Rules');
-            console.error('   4. Встановіть правила: { "rules": { "cars": { ".read": true, ".write": true } } }');
-            console.error('   5. Натисніть "Publish"');
-            alert('Помилка: Немає дозволу на запис в Firebase. Перевірте правила безпеки в Firebase Console. Деталі в консолі (F12).');
+            throw error; // Прокинути помилку далі
+        } finally {
+            // Очистити Promise після завершення
+            saveCarsPromise = null;
         }
-        
-        isSyncingCars = false;
-    }
+    })();
+    
+    return saveCarsPromise;
 }
 
 // Генерація ID
@@ -368,7 +415,7 @@ function updateCopyFromSelect() {
 }
 
 // Додавання нового авто
-function addCar(brand, model, copyFromCarId = null) {
+async function addCar(brand, model, copyFromCarId = null) {
     if (!brand || !model) {
         alert('Будь ласка, введіть марку та модель');
         return;
@@ -382,18 +429,7 @@ function addCar(brand, model, copyFromCarId = null) {
     
     cars.push(newCar);
     
-    // Зберегти в Firebase (асинхронно)
-    saveCars().then(() => {
-        console.log('Автомобіль додано та збережено в Firebase');
-    }).catch(error => {
-        console.error('Помилка збереження автомобіля:', error);
-    });
-    
-    // Якщо вказано авто для копіювання налаштувань
-    if (copyFromCarId) {
-        copyCategoriesFromCar(copyFromCarId, newCar.id);
-    }
-    
+    // Оновити UI одразу, щоб користувач бачив зміни
     renderCars();
     
     // Очистити форму
@@ -402,6 +438,26 @@ function addCar(brand, model, copyFromCarId = null) {
     const copySelect = document.getElementById('copyFromCar');
     if (copySelect) {
         copySelect.value = '';
+    }
+    
+    // Зберегти в Firebase (асинхронно) після оновлення UI
+    try {
+        await saveCars();
+        console.log('✅ Автомобіль додано та збережено в Firebase');
+        
+        // Якщо вказано авто для копіювання налаштувань
+        if (copyFromCarId) {
+            copyCategoriesFromCar(copyFromCarId, newCar.id);
+        }
+    } catch (error) {
+        console.error('❌ Помилка збереження автомобіля:', error);
+        // Якщо помилка, видалити авто з масиву
+        const index = cars.findIndex(car => car.id === newCar.id);
+        if (index > -1) {
+            cars.splice(index, 1);
+            renderCars();
+            alert('Помилка збереження автомобіля. Спробуйте ще раз.');
+        }
     }
 }
 
