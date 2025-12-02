@@ -46,43 +46,72 @@ function getFirebaseConfig() {
 
 // Ініціалізація Firebase
 function initFirebase() {
+    console.log('🔧 Початок ініціалізації Firebase...');
+    
+    // Перевірити, чи Firebase SDK завантажено
     if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK не завантажено');
+        console.error('❌ Firebase SDK не завантажено!');
+        console.error('Перевірте, чи підключені скрипти Firebase в HTML:');
+        console.error('  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>');
+        console.error('  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>');
         return false;
     }
     
+    console.log('✅ Firebase SDK завантажено');
+    
     const config = getFirebaseConfig();
+    console.log('📋 Конфігурація Firebase:', {
+        projectId: config.projectId,
+        databaseURL: config.databaseURL,
+        authDomain: config.authDomain
+    });
     
     try {
-        if (firebase.apps && firebase.apps.length === 0) {
-            firebase.initializeApp(config);
+        // Перевірити, чи Firebase вже ініціалізовано
+        if (firebase.apps && firebase.apps.length > 0) {
+            console.log('ℹ️ Firebase вже ініціалізовано, використовую існуючий екземпляр');
             database = firebase.database();
             firebaseInitialized = true;
-            console.log('✅ Firebase ініціалізовано успішно');
-            setupFirebaseListener();
-            return true;
-        } else if (firebase.apps && firebase.apps.length > 0) {
-            database = firebase.database();
-            firebaseInitialized = true;
-            console.log('✅ Firebase вже ініціалізовано');
+            console.log('✅ Database отримано');
             setupFirebaseListener();
             return true;
         }
+        
+        // Ініціалізувати Firebase
+        console.log('🚀 Ініціалізація Firebase...');
+        firebase.initializeApp(config);
+        database = firebase.database();
+        firebaseInitialized = true;
+        console.log('✅ Firebase ініціалізовано успішно!');
+        console.log('✅ Database підключено:', database.app.options.databaseURL);
+        
+        // Налаштувати слухача
+        setupFirebaseListener();
+        return true;
     } catch (error) {
         console.error('❌ Помилка ініціалізації Firebase:', error);
+        console.error('Деталі помилки:', error.message, error.code);
         firebaseInitialized = false;
         return false;
     }
-    return false;
 }
 
 // Налаштування слухача Firebase
 function setupFirebaseListener() {
-    if (!firebaseInitialized || !database) return;
+    if (!firebaseInitialized) {
+        console.warn('⚠️ Firebase не ініціалізовано, не можу налаштувати слухача');
+        return;
+    }
+    
+    if (!database) {
+        console.warn('⚠️ Database не встановлено, не можу налаштувати слухача');
+        return;
+    }
     
     try {
         carsRef = database.ref('cars');
-        console.log('Налаштування слухача Firebase для списку автомобілів');
+        console.log('🔧 Налаштування слухача Firebase для списку автомобілів');
+        console.log('📍 Шлях до даних: /cars');
         
         carsRef.on('value', (snapshot) => {
             if (isSyncingCars) {
@@ -568,6 +597,57 @@ function toggleTheme() {
     applyTheme(newTheme);
 }
 
+// Функція для тестування підключення Firebase
+async function testFirebaseConnection() {
+    console.log('🧪 Тестування підключення Firebase...');
+    
+    if (!firebaseInitialized || !database) {
+        console.error('❌ Firebase не ініціалізовано');
+        return false;
+    }
+    
+    try {
+        // Тест запису
+        console.log('📤 Тест запису в /test/connection...');
+        const testRef = database.ref('test/connection');
+        await testRef.set({
+            timestamp: Date.now(),
+            test: true
+        });
+        console.log('✅ Запис успішний');
+        
+        // Тест читання
+        console.log('📥 Тест читання з /test/connection...');
+        const snapshot = await testRef.once('value');
+        const data = snapshot.val();
+        console.log('✅ Читання успішне:', data);
+        
+        // Тест запису в /cars
+        console.log('📤 Тест запису в /cars/test...');
+        const carsTestRef = database.ref('cars/test-connection');
+        await carsTestRef.set({
+            brand: 'Test',
+            model: 'Test Model'
+        });
+        console.log('✅ Запис в /cars успішний');
+        
+        // Видалити тестові дані
+        await carsTestRef.remove();
+        await testRef.remove();
+        console.log('✅ Тестові дані видалено');
+        
+        console.log('✅ Всі тести пройдені успішно!');
+        return true;
+    } catch (error) {
+        console.error('❌ Помилка тестування:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            console.error('🚨 Проблема: Немає дозволу на запис/читання');
+            console.error('🔧 Рішення: Перевірте правила безпеки в Firebase Console');
+        }
+        return false;
+    }
+}
+
 // Ініціалізація
 document.addEventListener('DOMContentLoaded', async () => {
     PASSWORD_HASH = await hashPassword('vasil');
@@ -580,6 +660,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Ініціалізувати Firebase
     const firebaseInitResult = initFirebase();
     console.log('🔧 Результат ініціалізації Firebase:', firebaseInitResult);
+    
+    // Якщо Firebase ініціалізовано, протестувати підключення
+    if (firebaseInitialized) {
+        setTimeout(async () => {
+            await testFirebaseConnection();
+        }, 1000);
+    }
     
     // Завантажити список авто
     if (!firebaseInitialized) {
@@ -647,5 +734,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+    
+    // Глобальна функція для тестування Firebase (доступна з консолі)
+    window.testFirebase = testFirebaseConnection;
+    window.checkFirebaseStatus = () => {
+        console.log('=== Статус Firebase ===');
+        console.log('SDK завантажено:', typeof firebase !== 'undefined');
+        console.log('Firebase ініціалізовано:', firebaseInitialized);
+        console.log('Database встановлено:', !!database);
+        console.log('carsRef встановлено:', !!carsRef);
+        console.log('Кількість автомобілів:', cars.length);
+        if (database) {
+            console.log('Database URL:', database.app.options.databaseURL);
+        }
+        console.log('=====================');
+    };
 });
 

@@ -62,39 +62,42 @@ function isFirebaseConfigValid(config) {
 
 // Ініціалізація Firebase
 function initFirebase() {
+    console.log('🔧 Початок ініціалізації Firebase...');
+    
     // Перевірити, чи Firebase SDK завантажено
     if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK не завантажено');
+        console.error('❌ Firebase SDK не завантажено!');
+        console.error('Перевірте, чи підключені скрипти Firebase в HTML:');
+        console.error('  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>');
+        console.error('  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>');
         return false;
     }
+    
+    console.log('✅ Firebase SDK завантажено');
     
     const config = getFirebaseConfig();
     
     // Перевірити валідність конфігурації
     if (!isFirebaseConfigValid(config)) {
-        console.warn('Firebase не налаштовано');
+        console.warn('⚠️ Firebase не налаштовано');
         console.warn('Для налаштування збережіть конфігурацію в localStorage під ключем "firebaseConfig"');
         console.warn('Використовується localStorage як резервний варіант');
         return false;
     }
     
+    console.log('📋 Конфігурація Firebase:', {
+        projectId: config.projectId,
+        databaseURL: config.databaseURL,
+        authDomain: config.authDomain
+    });
+    
     try {
-        if (firebase.apps && firebase.apps.length === 0) {
-            firebase.initializeApp(config);
+        // Перевірити, чи Firebase вже ініціалізовано
+        if (firebase.apps && firebase.apps.length > 0) {
+            console.log('ℹ️ Firebase вже ініціалізовано, використовую існуючий екземпляр');
             database = firebase.database();
             firebaseInitialized = true;
-            console.log('Firebase ініціалізовано успішно');
-            
-            // Налаштувати слухач для синхронізації даних (якщо currentCarId вже встановлено)
-            // Якщо ні, слухач буде налаштовано пізніше в DOMContentLoaded
-            if (currentCarId) {
-                setupFirebaseListener();
-            }
-            return true;
-        } else if (firebase.apps && firebase.apps.length > 0) {
-            database = firebase.database();
-            firebaseInitialized = true;
-            console.log('Firebase вже ініціалізовано');
+            console.log('✅ Database отримано');
             
             // Налаштувати слухач для синхронізації даних (якщо currentCarId вже встановлено)
             if (currentCarId) {
@@ -102,13 +105,28 @@ function initFirebase() {
             }
             return true;
         }
+        
+        // Ініціалізувати Firebase
+        console.log('🚀 Ініціалізація Firebase...');
+        firebase.initializeApp(config);
+        database = firebase.database();
+        firebaseInitialized = true;
+        console.log('✅ Firebase ініціалізовано успішно!');
+        console.log('✅ Database підключено:', database.app.options.databaseURL);
+        
+        // Налаштувати слухач для синхронізації даних (якщо currentCarId вже встановлено)
+        // Якщо ні, слухач буде налаштовано пізніше в DOMContentLoaded
+        if (currentCarId) {
+            setupFirebaseListener();
+        }
+        return true;
     } catch (error) {
-        console.warn('Помилка ініціалізації Firebase:', error);
+        console.error('❌ Помилка ініціалізації Firebase:', error);
+        console.error('Деталі помилки:', error.message, error.code);
         console.warn('Використовується localStorage як резервний варіант');
         firebaseInitialized = false;
         return false;
     }
-    return false;
 }
 
 // Отримання ID авто з URL
@@ -1996,6 +2014,56 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("btnAddCategory").click();
         }
     });
+    
+    // Глобальні функції для тестування Firebase (доступні з консолі)
+    window.checkFirebaseStatus = () => {
+        console.log('=== Статус Firebase ===');
+        console.log('SDK завантажено:', typeof firebase !== 'undefined');
+        console.log('Firebase ініціалізовано:', firebaseInitialized);
+        console.log('Database встановлено:', !!database);
+        console.log('categoriesRef встановлено:', !!categoriesRef);
+        console.log('currentCarId:', currentCarId);
+        console.log('Кількість категорій:', categories.length);
+        if (database) {
+            console.log('Database URL:', database.app.options.databaseURL);
+        }
+        if (categoriesRef) {
+            console.log('Categories path:', categoriesRef.toString());
+        }
+        console.log('=====================');
+    };
+    
+    window.testFirebaseWrite = async () => {
+        if (!firebaseInitialized || !database) {
+            console.error('❌ Firebase не ініціалізовано');
+            return false;
+        }
+        
+        try {
+            console.log('🧪 Тест запису в Firebase...');
+            const testRef = database.ref('test/write-test');
+            await testRef.set({
+                timestamp: Date.now(),
+                test: true
+            });
+            console.log('✅ Запис успішний');
+            
+            if (currentCarId && categoriesRef) {
+                console.log('🧪 Тест запису категорій...');
+                await saveCategoriesToFirebase();
+                console.log('✅ Категорії збережено');
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Помилка запису:', error);
+            if (error.code === 'PERMISSION_DENIED') {
+                console.error('🚨 Проблема: Немає дозволу на запис');
+                console.error('🔧 Рішення: Перевірте правила безпеки в Firebase Console');
+            }
+            return false;
+        }
+    };
 });
 
 // Функція для перевірки, де зберігаються дані (для відлагодження)

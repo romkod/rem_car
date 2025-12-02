@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест підключення Firebase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h1>Тест підключення Firebase</h1>
+    
+    <div class="test-section">
+        <h2>1. Перевірка Firebase SDK</h2>
+        <div id="sdkStatus" class="status info">Перевірка...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Ініціалізація Firebase</h2>
+        <div id="initStatus" class="status info">Очікування...</div>
+        <button onclick="testInit()">Ініціалізувати Firebase</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Тест запису в базу даних</h2>
+        <div id="writeStatus" class="status info">Очікування...</div>
+        <button onclick="testWrite()">Записати тестові дані</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Тест читання з бази даних</h2>
+        <div id="readStatus" class="status info">Очікування...</div>
+        <button onclick="testRead()">Прочитати дані</button>
+        <pre id="readData"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Перевірка правил безпеки</h2>
+        <div id="rulesStatus" class="status info">Очікування...</div>
+        <button onclick="testRules()">Перевірити правила</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCNZ3vvBe_WHG4VuvpjQJttcN_y3aRnHKg",
+            authDomain: "remcar-a23dc.firebaseapp.com",
+            databaseURL: "https://remcar-a23dc-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "remcar-a23dc",
+            storageBucket: "remcar-a23dc.firebasestorage.app",
+            messagingSenderId: "501067679866",
+            appId: "1:501067679866:web:007744a897f8d83275d3c3",
+            measurementId: "G-22BSZF8J10"
+        };
+
+        let database = null;
+        let firebaseInitialized = false;
+
+        // Перевірка SDK
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof firebase !== 'undefined') {
+                document.getElementById('sdkStatus').className = 'status success';
+                document.getElementById('sdkStatus').textContent = '✅ Firebase SDK завантажено успішно';
+            } else {
+                document.getElementById('sdkStatus').className = 'status error';
+                document.getElementById('sdkStatus').textContent = '❌ Firebase SDK не завантажено';
+            }
+        });
+
+        // Тест ініціалізації
+        function testInit() {
+            const statusEl = document.getElementById('initStatus');
+            try {
+                if (typeof firebase === 'undefined') {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Firebase SDK не завантажено';
+                    return;
+                }
+
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                firebaseInitialized = true;
+                
+                statusEl.className = 'status success';
+                statusEl.innerHTML = `✅ Firebase ініціалізовано успішно!<br>
+                    Database URL: ${database.app.options.databaseURL}`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `❌ Помилка ініціалізації:<br>${error.message}`;
+            }
+        }
+
+        // Тест запису
+        async function testWrite() {
+            const statusEl = document.getElementById('writeStatus');
+            
+            if (!firebaseInitialized || !database) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Спочатку ініціалізуйте Firebase';
+                return;
+            }
+
+            try {
+                statusEl.className = 'status info';
+                statusEl.textContent = '⏳ Запис даних...';
+                
+                const testRef = database.ref('test/connection');
+                await testRef.set({
+                    timestamp: Date.now(),
+                    message: 'Тест підключення',
+                    status: 'success'
+                });
+                
+                statusEl.className = 'status success';
+                statusEl.textContent = '✅ Дані успішно записані в /test/connection';
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `❌ Помилка запису:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                
+                if (error.code === 'PERMISSION_DENIED') {
+                    statusEl.innerHTML += '<br><br>🔧 Проблема: Немає дозволу на запис. Перевірте правила безпеки в Firebase Console.';
+                }
+            }
+        }
+
+        // Тест читання
+        async function testRead() {
+            const statusEl = document.getElementById('readStatus');
+            const dataEl = document.getElementById('readData');
+            
+            if (!firebaseInitialized || !database) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Спочатку ініціалізуйте Firebase';
+                return;
+            }
+
+            try {
+                statusEl.className = 'status info';
+                statusEl.textContent = '⏳ Читання даних...';
+                
+                // Читати тестові дані
+                const testRef = database.ref('test/connection');
+                const snapshot = await testRef.once('value');
+                const testData = snapshot.val();
+                
+                // Читати список автомобілів
+                const carsRef = database.ref('cars');
+                const carsSnapshot = await carsRef.once('value');
+                const carsData = carsSnapshot.val();
+                
+                statusEl.className = 'status success';
+                statusEl.textContent = '✅ Дані успішно прочитані';
+                
+                dataEl.textContent = JSON.stringify({
+                    test: testData,
+                    cars: carsData
+                }, null, 2);
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `❌ Помилка читання:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                dataEl.textContent = '';
+            }
+        }
+
+        // Тест правил
+        async function testRules() {
+            const statusEl = document.getElementById('rulesStatus');
+            
+            if (!firebaseInitialized || !database) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Спочатку ініціалізуйте Firebase';
+                return;
+            }
+
+            try {
+                statusEl.className = 'status info';
+                statusEl.textContent = '⏳ Перевірка правил...';
+                
+                // Спробувати записати в /cars
+                const carsRef = database.ref('cars/test-car');
+                await carsRef.set({
+                    brand: 'Test',
+                    model: 'Test Model'
+                });
+                
+                // Спробувати прочитати
+                const snapshot = await carsRef.once('value');
+                const data = snapshot.val();
+                
+                // Видалити тестові дані
+                await carsRef.remove();
+                
+                statusEl.className = 'status success';
+                statusEl.innerHTML = `✅ Правила безпеки налаштовані правильно!<br>
+                    Запис та читання працюють коректно.`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                let message = `❌ Помилка перевірки правил:<br>${error.message}<br>Код: ${error.code || 'N/A'}`;
+                
+                if (error.code === 'PERMISSION_DENIED') {
+                    message += '<br><br>🔧 РІШЕННЯ:<br>';
+                    message += '1. Відкрийте Firebase Console<br>';
+                    message += '2. Realtime Database → Rules<br>';
+                    message += '3. Встановіть правила:<br>';
+                    message += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">{\n  "rules": {\n    "cars": {\n      ".read": true,\n      ".write": true\n    }\n  }\n}</pre>';
+                    message += '4. Натисніть "Publish"';
+                }
+                
+                statusEl.innerHTML = message;
+            }
+        }
+    </script>
+</body>
+</html>
+
