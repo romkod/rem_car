@@ -1123,6 +1123,7 @@ function renderCategories() {
             // Функція для створення поля ціни
             const createPriceField = (index = 0) => {
                 const priceRow = document.createElement("div");
+                priceRow.className = "price-field-row";
                 priceRow.style.display = "flex";
                 priceRow.style.gap = "8px";
                 priceRow.style.alignItems = "center";
@@ -1133,19 +1134,16 @@ function renderCategories() {
                 priceInput.placeholder = "Ціна";
                 priceInput.min = "0";
                 priceInput.step = "100";
-                priceInput.className = "form-input";
-                priceInput.style.width = "120px";
+                priceInput.className = "form-input price-input";
                 
                 const descInput = document.createElement("input");
                 descInput.type = "text";
                 descInput.placeholder = "Підпис ціни";
-                descInput.className = "form-input";
-                descInput.style.flex = "1";
+                descInput.className = "form-input desc-input";
                 
                 const removeBtn = document.createElement("button");
-                removeBtn.className = "btn-delete";
+                removeBtn.className = "btn-delete price-remove-btn";
                 removeBtn.textContent = "×";
-                removeBtn.style.padding = "4px 8px";
                 removeBtn.onclick = () => {
                     if (pricesContainer.children.length > 1) {
                         priceRow.remove();
