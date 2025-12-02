@@ -10,37 +10,27 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
+<!-- Плаваюча кнопка перемикання тем -->
+<button id="themeToggleBtn" class="theme-toggle-btn" title="Перемкнути тему">🎨</button>
+
 <header>
-    <div class="header-content">
-        <div>
-            <h1>Що по ремонту?</h1>
-            <p>Поставте галочки навпроти пошкоджених елементів і отримайте орієнтовну суму ремонту.</p>
+    <div class="header-container">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>Що по ремонту?</h1>
+                <p>Поставте галочки навпроти пошкоджених елементів і отримайте орієнтовну суму ремонту.</p>
+            </div>
+        </div>
+        <div id="exchangeRate" class="exchange-rate">
+            <span id="exchangeRateText">Завантаження курсу валют...</span>
         </div>
     </div>
 </header>
 
 <div class="wrapper">
     <div class="layout">
-        <!-- Ліва частина: вікно аукціону -->
-        <section class="card auction-section">
-            <h2>Сторінка лоту на аукціоні</h2>
-            <div class="auction-frame-container" id="auctionFrameContainer">
-                <button class="btn-change-url" id="btnChangeUrl" title="Змінити URL">✕</button>
-                <button class="btn-open-new-tab" id="btnOpenNewTab" title="Відкрити в новій вкладці" style="display: none;">🔗</button>
-                <button class="btn-proxy-settings" id="btnProxySettings" title="Налаштування проксі">⚙️</button>
-                <iframe id="auctionFrame" src="about:blank" frameborder="0" allowfullscreen></iframe>
-                <div id="auctionPlaceholder" class="auction-placeholder">
-                    <p>Натисніть на це вікно, щоб вставити URL з буфера обміну</p>
-                </div>
-                <div id="auctionError" class="auction-error" style="display: none;">
-                    <p>⚠️ Сайт блокує вбудовування в iframe</p>
-                    <p>Натисніть кнопку <strong>🔗</strong> щоб відкрити посилання в новій вкладці</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Права частина: елементи та підсумок -->
-        <div class="right-column">
+        <!-- Елементи та підсумок -->
+        <div class="main-content">
             <!-- Елементи автомобіля -->
         <section class="card">
             <div class="card-header-with-button">
@@ -87,36 +77,18 @@
     </div>
 </div>
 
-<!-- Модальне вікно для налаштування проксі -->
-<div id="proxySettingsModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Налаштування проксі-сервера</h3>
-        <p class="modal-note">Введіть URL вашого проксі-сервера. Проксі повинен приймати URL як параметр.</p>
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">URL проксі-сервера:</label>
-            <input type="text" id="customProxyUrl" class="form-input" placeholder="https://your-proxy.com/?url=">
-            <small style="display: block; margin-top: 4px; color: #666; font-size: 12px;">
-                Приклад: https://your-proxy.com/?url= або https://proxy.example.com/
-            </small>
-        </div>
-        <div style="margin-bottom: 12px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
-                <input type="checkbox" id="proxyUseCustomOnly" style="width: auto;">
-                <span>Використовувати тільки власний проксі (не використовувати публічні)</span>
-            </label>
-        </div>
-        <div style="margin-bottom: 12px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
-                <input type="checkbox" id="useProxyServers" checked style="width: auto;">
-                <span>Використовувати IP:Port проксі-сервери (157.230.228.252:3128, 104.129.194.45:11567, тощо)</span>
-            </label>
+<!-- Модальне вікно для налаштування залежностей -->
+<div id="dependenciesModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <h3>Налаштування залежностей</h3>
+        <p class="modal-note">Виберіть елементи, які автоматично вибираються разом з цим елементом</p>
+        <div id="dependenciesList" style="max-height: 400px; overflow-y: auto; margin: 16px 0;">
+            <!-- Список елементів для вибору залежностей -->
         </div>
         <div class="modal-buttons">
-            <button class="btn-add" id="btnSaveProxy">Зберегти</button>
-            <button class="btn-clear" id="btnClearProxy">Очистити</button>
-            <button class="btn-clear" id="btnCancelProxy">Скасувати</button>
+            <button class="btn-add" id="btnSaveDependencies">Зберегти</button>
+            <button class="btn-clear" id="btnCancelDependencies">Скасувати</button>
         </div>
-        <p id="proxyError" class="error-message" style="display: none; margin-top: 8px;"></p>
     </div>
 </div>
 
