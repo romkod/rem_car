@@ -131,6 +131,30 @@ function setupFirebaseListener() {
                 // Фільтрувати невалідні авто
                 const validLoadedCars = filterValidCars(loadedCars);
                 
+                // Якщо були відфільтровані невалідні авто, зберегти очищені дані в Firebase
+                if (validLoadedCars.length !== loadedCars.length) {
+                    const removedCount = loadedCars.length - validLoadedCars.length;
+                    console.log(`🧹 Виявлено ${removedCount} невалідних авто в Firebase, очищаємо...`);
+                    
+                    // Зберегти очищені дані в Firebase
+                    const carsObj = {};
+                    validLoadedCars.forEach(car => {
+                        if (isValidCar(car)) {
+                            carsObj[car.id] = { brand: car.brand, model: car.model };
+                        }
+                    });
+                    
+                    // Зберегти без виклику слухача (встановити isSyncingCars)
+                    isSyncingCars = true;
+                    carsRef.set(carsObj).then(() => {
+                        console.log('✅ Очищені дані збережено в Firebase');
+                        setTimeout(() => { isSyncingCars = false; }, 2000);
+                    }).catch(err => {
+                        console.error('❌ Помилка збереження очищених даних:', err);
+                        isSyncingCars = false;
+                    });
+                }
+                
                 console.log('📋 Завантажені автомобілі:', validLoadedCars);
                 
                 // Порівняти з поточними даними, щоб уникнути непотрібних оновлень
@@ -373,9 +397,20 @@ function isValidCar(car) {
     }
     
     // Перевірити, чи не містить "test" (ігноруючи регістр)
-    const brandLower = brand.toLowerCase();
-    const modelLower = model.toLowerCase();
-    if (brandLower.includes('test') || modelLower.includes('test')) {
+    const brandLower = brand.toLowerCase().trim();
+    const modelLower = model.toLowerCase().trim();
+    
+    // Перевірити на точну відповідність "test" або містить "test"
+    if (brandLower === 'test' || modelLower === 'test' || 
+        brandLower.includes('test') || modelLower.includes('test')) {
+        console.warn('🚫 Виявлено авто з "test" в назві:', { brand, model });
+        return false;
+    }
+    
+    // Додаткова перевірка: якщо обидва поля містять "test"
+    if ((brandLower.includes('test') && modelLower.includes('test')) ||
+        (brandLower === 'test' && modelLower === 'test')) {
+        console.warn('🚫 Виявлено авто з "test" в обох полях:', { brand, model });
         return false;
     }
     
@@ -420,11 +455,18 @@ function renderCars() {
     
     // Оновити масив cars, якщо були відфільтровані невалідні
     if (validCars.length !== cars.length) {
+        const removedCount = cars.length - validCars.length;
+        console.log(`🧹 Видалено ${removedCount} невалідних авто при відображенні`);
         cars = validCars;
         // Зберегти відфільтровані дані
         localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
         if (firebaseInitialized && !isSyncingCars) {
-            saveCars().catch(err => console.error('Помилка збереження після фільтрації:', err));
+            // Використати setTimeout, щоб уникнути конфлікту з isSyncingCars
+            setTimeout(() => {
+                if (!isSyncingCars) {
+                    saveCars().catch(err => console.error('Помилка збереження після фільтрації:', err));
+                }
+            }, 100);
         }
     }
     
@@ -939,6 +981,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Database URL:', database.app.options.databaseURL);
         }
         console.log('=====================');
+    };
+    
+    // Глобальна функція для примусового очищення невалідних авто (для використання в консолі)
+    window.cleanInvalidCars = async function() {
+        console.log('🧹 Початок примусового очищення невалідних авто...');
+        console.log('Поточні авто:', cars);
+        
+        // Фільтрувати невалідні авто
+        const validCars = filterValidCars(cars);
+        const removedCount = cars.length - validCars.length;
+        
+        if (removedCount > 0) {
+            console.log(`✅ Виявлено та видалено ${removedCount} невалідних авто`);
+            cars = validCars;
+            
+            // Зберегти в localStorage
+            localStorage.setItem('repairCalculatorCars', JSON.stringify(cars));
+            
+            // Зберегти в Firebase, якщо він налаштований
+            if (firebaseInitialized && !isSyncingCars) {
+                try {
+                    await saveCars();
+                    console.log('✅ Очищені дані збережено в Firebase');
+                } catch (error) {
+                    console.error('❌ Помилка збереження очищених даних:', error);
+                }
+            }
+            
+            // Оновити відображення
+            renderCars();
+            
+            return { success: true, removed: removedCount };
+        } else {
+            console.log('✅ Невалідних авто не знайдено');
+            return { success: true, removed: 0 };
+        }
     };
 });
 
