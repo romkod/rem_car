@@ -1,0 +1,232 @@
+/* Стилі для головної сторінки зі списком авто */
+
+.cars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.car-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.car-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    border-color: #1f4f7b;
+}
+
+.car-card h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #1f4f7b;
+}
+
+.car-card p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.car-card .car-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.car-card-wrapper {
+    position: relative;
+}
+
+.btn-delete-car {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s;
+    line-height: 1;
+    padding: 0;
+}
+
+.btn-delete-car:hover {
+    background: #c82333;
+}
+
+body.theme-dark .btn-delete-car {
+    background: #dc3545;
+}
+
+body.theme-dark .btn-delete-car:hover {
+    background: #c82333;
+}
+
+.admin-controls {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.add-car-form {
+    background: #f8f9fb;
+    border: 2px dashed #1f4f7b;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 32px 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.add-car-form h3 {
+    margin: 0 0 16px;
+    color: #1f4f7b;
+}
+
+.add-car-form .form-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.add-car-form .form-group input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn-back-to-list {
+    background: #1f4f7b;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.btn-back-to-list:hover {
+    background: #163a5b;
+}
+
+body.theme-dark .car-card {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.theme-dark .car-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+body.theme-dark .car-card h3 {
+    color: #667eea;
+}
+
+body.theme-dark .car-card p {
+    color: #b0b0b0;
+}
+
+body.theme-dark .add-car-form {
+    background: #333;
+    border-color: #667eea;
+}
+
+body.theme-dark .add-car-form h3 {
+    color: #667eea;
+}
+
+body.theme-dark .add-car-form input,
+body.theme-dark .add-car-form select {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .add-car-form input:focus,
+body.theme-dark .add-car-form select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark .add-car-form select option {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.theme-dark .add-car-form .btn-add {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .add-car-form .btn-add:hover {
+    background: #218838;
+}
+
+body.theme-dark .admin-controls {
+    background: transparent;
+}
+
+body.theme-dark .admin-controls .btn-edit-mode {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .admin-controls .btn-edit-mode:hover {
+    background: #218838;
+}
+
+body.theme-dark .admin-controls .btn-edit-mode.active {
+    background: #dc3545;
+}
+
+body.theme-dark .admin-controls .btn-edit-mode.active:hover {
+    background: #c82333;
+}
+
+body.theme-dark .car-card .car-icon {
+    color: #667eea;
+    opacity: 0.8;
+}
+
+body.theme-dark .car-card:hover .car-icon {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .cars-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .add-car-form .form-group {
+        flex-direction: column;
+    }
+    
+    .add-car-form .form-group input {
+        width: 100%;
+    }
+}
+

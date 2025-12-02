@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Калькулятор ремонту авто - Вибір автомобіля</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+<!-- Плаваюча кнопка перемикання тем -->
+<button id="themeToggleBtn" class="theme-toggle-btn" title="Перемкнути тему">🎨</button>
+
+<header>
+    <div class="header-container">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>Калькулятор вартості ремонту</h1>
+                <p>Виберіть автомобіль для розрахунку вартості ремонту</p>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="wrapper">
+    <div class="cars-grid" id="carsGrid">
+        <!-- Список автомобілів буде додано через JavaScript -->
+    </div>
+    
+    <!-- Форма додавання нового авто (тільки в режимі редагування) -->
+    <div id="addCarForm" class="add-car-form" style="display: none;">
+        <h3>Додати нове авто</h3>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="newCarBrand" placeholder="Марка (наприклад, Tesla)" class="form-input">
+            <input type="text" id="newCarModel" placeholder="Модель (наприклад, Model 3)" class="form-input">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label for="copyFromCar" style="font-size: 14px; color: #666;">Скопіювати налаштування з (необов'язково):</label>
+                <select id="copyFromCar" class="form-input" style="width: 100%;">
+                    <option value="">-- Не копіювати --</option>
+                </select>
+            </div>
+            <button class="btn-add" id="btnAddCar">Додати авто</button>
+        </div>
+    </div>
+    
+    <div class="admin-controls">
+        <button class="btn-edit-mode" id="btnEditMode">Режим редагування</button>
+    </div>
+</div>
+
+<!-- Модальне вікно для введення пароля -->
+<div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Введіть пароль</h3>
+        <p class="modal-note">Для доступу до режиму редагування потрібен пароль</p>
+        <input type="password" id="passwordInput" class="form-input" placeholder="Пароль" autocomplete="off">
+        <div class="modal-buttons">
+            <button class="btn-add" id="btnPasswordSubmit">Увійти</button>
+            <button class="btn-clear" id="btnPasswordCancel">Скасувати</button>
+        </div>
+        <p id="passwordError" class="error-message" style="display: none; color: #dc3545; font-size: 12px; margin-top: 8px;"></p>
+    </div>
+</div>
+
+<script src="home.js"></script>
+</body>
+</html>

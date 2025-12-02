@@ -1,0 +1,1672 @@
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f4f5f7;
+    color: #222;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Плаваюча кнопка перемикання тем */
+.theme-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.theme-toggle-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Стилі для опцій теми */
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #e1e4eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+.theme-option:hover {
+    border-color: #1f4f7b;
+    background: #f8f9fb;
+}
+.theme-option input[type="radio"] {
+    display: none;
+}
+.theme-option input[type="radio"]:checked + .theme-preview {
+    border: 3px solid #1f4f7b;
+}
+.theme-preview {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+.theme-option span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Темна тема */
+body.theme-dark {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+body.theme-dark header {
+    background: #2d2d2d;
+    color: #fff;
+}
+body.theme-dark .card {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+body.theme-dark .category {
+    background: #333;
+    border-color: #444;
+}
+body.theme-dark .item {
+    border-bottom-color: #444;
+}
+body.theme-dark .form-input,
+body.theme-dark .item-name-input,
+body.theme-dark .item-price input {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+body.theme-dark .modal-content {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+body.theme-dark .theme-option {
+    border-color: #444;
+}
+body.theme-dark .theme-option:hover {
+    border-color: #667eea;
+    background: #333;
+}
+body.theme-dark .category-header {
+    border-bottom-color: #444;
+}
+body.theme-dark .category-header h3 {
+    color: #667eea;
+}
+body.theme-dark .category-header span {
+    color: #b0b0b0;
+}
+body.theme-dark .theme-toggle-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+body.theme-dark .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+body.theme-dark .item-price {
+    color: #e0e0e0;
+}
+body.theme-dark .item label {
+    color: #e0e0e0;
+}
+body.theme-dark .note {
+    color: #b0b0b0;
+}
+body.theme-dark .card h2 {
+    color: #e0e0e0;
+}
+body.theme-dark .card small {
+    color: #b0b0b0;
+}
+body.theme-dark .summary-main {
+    color: #e0e0e0;
+}
+body.theme-dark .summary-row span.label {
+    color: #b0b0b0;
+}
+body.theme-dark .summary-row span.value {
+    color: #e0e0e0;
+}
+body.theme-dark .summary-footer {
+    color: #b0b0b0;
+}
+body.theme-dark .btn-clear {
+    background: #444;
+    color: #e0e0e0;
+}
+body.theme-dark .btn-clear:hover {
+    background: #555;
+}
+body.theme-dark .btn-export {
+    background: #667eea;
+    color: #fff;
+}
+body.theme-dark .btn-export:hover {
+    background: #5568d3;
+}
+body.theme-dark .btn-delete {
+    background: #dc3545;
+    color: #fff;
+}
+body.theme-dark .btn-delete:hover {
+    background: #c82333;
+}
+body.theme-dark .btn-delete-category {
+    background: #dc3545;
+    color: #fff;
+}
+body.theme-dark .btn-delete-category:hover {
+    background: #c82333;
+}
+body.theme-dark .btn-dependencies {
+    background: #17a2b8;
+    color: #fff;
+}
+body.theme-dark .btn-dependencies:hover {
+    background: #138496;
+}
+body.theme-dark .edit-form {
+    background: #333;
+    border-color: #555;
+}
+body.theme-dark .edit-form h3 {
+    color: #667eea;
+}
+body.theme-dark .add-item-form {
+    background: #333;
+    border-color: #555;
+}
+body.theme-dark .modal-content h3 {
+    color: #667eea;
+}
+body.theme-dark .modal-note {
+    color: #b0b0b0;
+}
+body.theme-dark .theme-option span {
+    color: #e0e0e0;
+}
+
+/* Відображення курсу валют */
+.exchange-rate {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 24px;
+    text-align: center;
+    font-size: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+body.theme-dark .exchange-rate {
+    background: rgba(0, 0, 0, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Стилі для вибору валюти в режимі редагування */
+.item-currency-select {
+    padding: 6px 8px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    cursor: pointer;
+    min-width: 100px;
+}
+.item-currency-select:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+body.theme-dark .item-currency-select {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+header {
+    background: #1f4f7b;
+    color: #fff;
+    padding: 16px 24px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    width: 100%;
+    box-sizing: border-box;
+}
+header h1 {
+    margin: 0;
+    font-size: 22px;
+    text-align: center;
+}
+header p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.9;
+    text-align: center;
+}
+
+.btn-back-to-list {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-back-to-list:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+body.theme-dark .btn-back-to-list {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .btn-back-to-list:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    text-align: center;
+}
+.header-text {
+    text-align: center;
+}
+@media (max-width: 900px) {
+    .header-content {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .header-text {
+        text-align: center;
+    }
+}
+.wrapper {
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 0 16px 32px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.header-container {
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+.layout {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    align-items: flex-start;
+}
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+.summary-card {
+    width: 400px;
+    flex-shrink: 0;
+}
+.auction-section {
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+.auction-frame-container {
+    flex: 1;
+    position: relative;
+    min-height: 500px;
+    border: 1px solid #e1e4eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fb;
+    cursor: pointer;
+}
+.auction-frame-container:not(.loaded):hover {
+    background: #f0f2f5;
+    border-color: #1f4f7b;
+}
+.btn-change-url {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(220, 53, 69, 0.9);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+.btn-change-url:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: scale(1.1);
+}
+.auction-frame-container.loaded .btn-change-url {
+    display: flex;
+}
+.auction-frame-container.loaded {
+    cursor: default;
+}
+.copart-data-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    overflow-y: auto;
+    padding: 16px;
+    z-index: 1;
+}
+.copart-data-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e1e4eb;
+}
+.copart-data-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1f4f7b;
+}
+.btn-view-original {
+    background: #1f4f7b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-view-original:hover {
+    background: #163a5b;
+}
+.copart-data-content {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    background: #f8f9fb;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+.copart-data-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.auction-frame-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+.auction-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+    user-select: none;
+    pointer-events: none;
+}
+.auction-placeholder p {
+    margin: 0;
+}
+.auction-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    color: #856404;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+    z-index: 5;
+}
+.auction-error p {
+    margin: 8px 0;
+}
+.btn-open-new-tab {
+    position: absolute;
+    top: 8px;
+    right: 48px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(31, 79, 123, 0.9);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+.btn-open-new-tab:hover {
+    background: rgba(31, 79, 123, 1);
+    transform: scale(1.1);
+}
+.btn-proxy-settings {
+    position: absolute;
+    top: 8px;
+    right: 88px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(108, 117, 125, 0.9);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+.btn-proxy-settings:hover {
+    background: rgba(108, 117, 125, 1);
+    transform: scale(1.1);
+}
+.btn-proxy-settings {
+    display: flex;
+}
+.auction-frame-container.loaded .auction-placeholder {
+    display: none;
+}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.modal-content h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #1f4f7b;
+}
+.modal-note {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 16px;
+}
+.modal-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+.modal-buttons button {
+    flex: 1;
+}
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 8px;
+}
+@media (max-width: 1200px) {
+    .layout {
+        flex-direction: column;
+        align-items: center;
+    }
+    .main-content {
+        max-width: 100%;
+        width: 100%;
+    }
+    .summary-card {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+.card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    padding: 20px 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.card h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+.card-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+.card-header-with-button h2 {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+.card-header-with-button .btn-edit-mode {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+.card small {
+    color: #666;
+}
+.categories {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.category {
+    background: #f8f9fb;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid #e1e4eb;
+    width: 100%;
+}
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e1e4eb;
+    user-select: none;
+}
+
+.category-header:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: -4px -8px 8px;
+}
+
+body.theme-dark .category-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-collapse {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-collapse:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1f4f7b;
+}
+
+body.theme-dark .btn-collapse {
+    color: #b0b0b0;
+}
+
+body.theme-dark .btn-collapse:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #667eea;
+}
+
+.category-items {
+    transition: opacity 0.2s ease, max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.category.collapsed .category-items {
+    display: none;
+}
+.category-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f4f7b;
+}
+.category-header span {
+    font-size: 13px;
+    color: #555;
+}
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e1e4eb;
+    min-height: 40px;
+}
+.item:last-child {
+    border-bottom: none;
+}
+.item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+.item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+.item-price {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: #333;
+}
+.summary-card h2 {
+    margin-bottom: 4px;
+}
+.summary-main {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 10px 0;
+}
+.summary-main span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+}
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin: 4px 0;
+}
+.summary-row span.label {
+    color: #555;
+}
+.summary-row span.value {
+    font-variant-numeric: tabular-nums;
+}
+.summary-footer {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #666;
+}
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+button {
+    border-radius: 999px;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-clear {
+    background: #f0f2f5;
+}
+.btn-clear:hover {
+    background: #e2e4ea;
+}
+.btn-export {
+    background: #1f4f7b;
+    color: #fff;
+}
+.btn-export:hover {
+    background: #163a5b;
+}
+.note {
+    font-size: 12px;
+    color: #777;
+}
+.btn-edit-mode {
+    background: #28a745;
+    color: #fff;
+    border-radius: 999px;
+    border: none;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: fit-content;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+.btn-edit-mode:hover {
+    background: #218838;
+}
+.btn-edit-mode.active {
+    background: #dc3545;
+}
+.btn-edit-mode.active:hover {
+    background: #c82333;
+}
+.edit-form {
+    background: #f8f9fb;
+    border: 2px dashed #1f4f7b;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+.edit-form h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: #1f4f7b;
+}
+.form-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.form-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid #e1e4eb;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+.btn-add {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+.btn-add:hover {
+    background: #218838;
+}
+.btn-edit, .btn-delete {
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 4px;
+}
+.btn-edit {
+    background: #ffc107;
+    color: #000;
+}
+.btn-edit:hover {
+    background: #e0a800;
+}
+.btn-delete {
+    background: #dc3545;
+    color: #fff;
+}
+.btn-delete:hover {
+    background: #c82333;
+}
+.edit-mode .item {
+    position: relative;
+}
+.edit-mode .item-price {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.edit-mode .item-price input {
+    width: 110px;
+    padding: 6px 8px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: right;
+}
+.edit-mode .item-name-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 10px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-left: 6px;
+}
+.edit-mode .item-name-input:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+.btn-dependencies {
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-dependencies:hover {
+    background: #138496;
+}
+.btn-prices {
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-prices:hover {
+    background: #138496;
+}
+.btn-add-price {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.btn-add-price:hover {
+    background: #218838;
+}
+.item-prices-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+}
+.item-prices-display {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 8px;
+}
+.item-prices-display label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.item-prices-display input[type="radio"] {
+    cursor: pointer;
+}
+.add-item-prices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.add-item-prices > div {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+body.theme-dark .item-prices-display label {
+    color: #e0e0e0;
+}
+.edit-mode .item-price input:focus {
+    outline: none;
+    border-color: #1f4f7b;
+    box-shadow: 0 0 0 2px rgba(31, 79, 123, 0.1);
+}
+.edit-mode .category-header {
+    position: relative;
+}
+.edit-mode .category-header .btn-delete-category {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 8px;
+}
+.edit-mode .category-header .btn-delete-category:hover {
+    background: #c82333;
+}
+.edit-mode .add-item-form {
+    background: #fff;
+    border: 2px dashed #28a745;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+}
+.edit-mode .add-item-form input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e1e4eb;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+.edit-mode .add-item-form .form-group {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+.edit-mode .add-item-form .form-group input {
+    flex: 1;
+    margin-bottom: 0;
+}
+.edit-mode .add-item-form .btn-add-item {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.edit-mode .add-item-form .btn-add-item:hover {
+    background: #218838;
+}
+
+.item-prices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.item-prices-container label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+body.theme-dark .item-prices-container label {
+    color: #b0b0b0;
+}
+
+/* Додаткові стилі для темної теми - всі елементи */
+body.theme-dark select,
+body.theme-dark .form-input[type="text"],
+body.theme-dark .form-input[type="number"],
+body.theme-dark .form-input[type="password"] {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark select:focus,
+body.theme-dark .form-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark select option {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.theme-dark input[type="checkbox"] {
+    accent-color: #667eea;
+    filter: brightness(0.8);
+}
+
+body.theme-dark input[type="radio"] {
+    accent-color: #667eea;
+    filter: brightness(0.8);
+}
+
+body.theme-dark .item-prices-edit input[type="number"],
+body.theme-dark .item-prices-edit input[type="text"] {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .item-prices-edit input[type="number"]:focus,
+body.theme-dark .item-prices-edit input[type="text"]:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark .btn-add-price {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .btn-add-price:hover {
+    background: #218838;
+}
+
+body.theme-dark .modal {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+body.theme-dark .modal-content {
+    background: #2d2d2d;
+    border: 1px solid #444;
+}
+
+body.theme-dark #dependenciesList {
+    background: #1a1a1a !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px;
+}
+
+body.theme-dark #dependenciesList > div {
+    background: #333 !important;
+    border-color: #444 !important;
+    border-bottom-color: #444 !important;
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesList > div:hover {
+    background: #3a3a3a !important;
+}
+
+body.theme-dark #dependenciesList label {
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesList label strong {
+    color: #667eea !important;
+}
+
+body.theme-dark #dependenciesList input[type="checkbox"],
+body.theme-dark #dependenciesList input[type="radio"] {
+    accent-color: #667eea;
+    filter: brightness(1.2);
+}
+
+body.theme-dark #dependenciesList input[type="radio"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+body.theme-dark #dependenciesList input[type="radio"]:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #888 !important;
+}
+
+body.theme-dark .error-message {
+    color: #ff6b6b;
+    background: rgba(220, 53, 69, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+body.theme-dark #syncStatus {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    padding: 8px;
+    border-radius: 6px;
+    color: #4ade80;
+}
+
+body.theme-dark #syncStatus.error {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #ff6b6b;
+}
+
+body.theme-dark .btn-add {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .btn-add:hover {
+    background: #218838;
+}
+
+body.theme-dark .btn-edit-mode {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .btn-edit-mode:hover {
+    background: #218838;
+}
+
+body.theme-dark .btn-edit-mode.active {
+    background: #dc3545;
+}
+
+body.theme-dark .btn-edit-mode.active:hover {
+    background: #c82333;
+}
+
+body.theme-dark .add-item-form input {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .add-item-form input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark .add-item-form .btn-add-item {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .add-item-form .btn-add-item:hover {
+    background: #218838;
+}
+
+/* Scrollbar для темної теми */
+body.theme-dark ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+body.theme-dark ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Додаткові елементи для модального вікна залежностей */
+/* Стилі для контейнера цін у модальному вікні залежностей */
+body.theme-dark #dependenciesList > div > div {
+    border-left-color: #555 !important;
+    background: transparent !important;
+}
+
+/* Стилі для рядків цін у модальному вікні залежностей */
+body.theme-dark #dependenciesList > div > div > div {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesList > div > div > div:hover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    border-radius: 4px;
+}
+
+/* Стилі для радіо-кнопок у модальному вікні залежностей */
+body.theme-dark #dependenciesList input[type="radio"]:checked + label {
+    color: #667eea !important;
+    font-weight: 500;
+}
+
+body.theme-dark #dependenciesList input[type="radio"]:not(:disabled) + label {
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesList input[type="radio"]:not(:disabled) + label:hover {
+    color: #667eea !important;
+}
+
+/* Стилі для заголовка елемента в модальному вікні */
+body.theme-dark #dependenciesList > div > div:first-child {
+    background: transparent !important;
+}
+
+body.theme-dark #dependenciesList > div > div:first-child label {
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesList > div > div:first-child label strong {
+    color: #667eea !important;
+}
+
+/* Додаткові стилі для покращення вигляду модального вікна залежностей */
+body.theme-dark #dependenciesModal .modal-content {
+    background: #2d2d2d !important;
+    border: 1px solid #444 !important;
+}
+
+body.theme-dark #dependenciesModal .modal-content h3 {
+    color: #667eea !important;
+}
+
+body.theme-dark #dependenciesModal .modal-content .modal-note {
+    color: #b0b0b0 !important;
+}
+
+body.theme-dark #dependenciesModal .modal-buttons button {
+    transition: all 0.2s;
+}
+
+body.theme-dark #dependenciesModal .modal-buttons .btn-add {
+    background: #28a745 !important;
+    color: #fff !important;
+}
+
+body.theme-dark #dependenciesModal .modal-buttons .btn-add:hover {
+    background: #218838 !important;
+}
+
+body.theme-dark #dependenciesModal .modal-buttons .btn-clear {
+    background: #444 !important;
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark #dependenciesModal .modal-buttons .btn-clear:hover {
+    background: #555 !important;
+}
+
+/* Стилі для порожнього стану модального вікна залежностей */
+body.theme-dark #dependenciesList p {
+    color: #b0b0b0 !important;
+}
+
+/* Стилі для скролу в модальному вікні залежностей */
+body.theme-dark #dependenciesList::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.theme-dark #dependenciesList::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+body.theme-dark #dependenciesList::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+body.theme-dark #dependenciesList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Стилі для placeholder */
+body.theme-dark ::placeholder {
+    color: #888;
+    opacity: 1;
+}
+
+body.theme-dark input::placeholder {
+    color: #888;
+}
+
+body.theme-dark textarea::placeholder {
+    color: #888;
+}
+
+/* Стилі для wrapper */
+body.theme-dark .wrapper {
+    background: transparent;
+}
+
+/* Стилі для header container */
+body.theme-dark .header-container {
+    background: transparent;
+}
+
+/* Стилі для exchange rate */
+body.theme-dark .exchange-rate {
+    color: #b0b0b0;
+}
+
+body.theme-dark .exchange-rate span {
+    color: #b0b0b0;
+}
+
+/* Стилі для summary card */
+body.theme-dark .summary-card {
+    background: #2d2d2d;
+    border: 1px solid #444;
+}
+
+/* Стилі для categories container */
+body.theme-dark .categories {
+    background: transparent;
+}
+
+/* Стилі для item price row в edit mode */
+body.theme-dark .item-price-row {
+    background: #1a1a1a;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+/* Додаткові стилі для всіх інтерактивних елементів */
+body.theme-dark .item-prices-edit {
+    background: transparent;
+}
+
+body.theme-dark .item-prices-edit > div {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+body.theme-dark .item-prices-edit > div:hover {
+    border-color: #555;
+}
+
+/* Стилі для кнопки додавання ціни */
+body.theme-dark .item-prices-edit + .btn-add-price {
+    background: #28a745;
+    color: #fff;
+    border: 1px solid #28a745;
+}
+
+body.theme-dark .item-prices-edit + .btn-add-price:hover {
+    background: #218838;
+    border-color: #218838;
+}
+
+/* Стилі для кнопки видалення ціни */
+body.theme-dark .item-prices-edit .btn-delete {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+}
+
+body.theme-dark .item-prices-edit .btn-delete:hover {
+    background: #c82333;
+}
+
+/* Стилі для радіо-кнопок у режимі вибору ціни */
+body.theme-dark .item-prices-display input[type="radio"] {
+    accent-color: #667eea;
+}
+
+body.theme-dark .item-prices-display input[type="radio"]:checked + span {
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* Стилі для всіх input полів у темній темі */
+body.theme-dark input[type="text"],
+body.theme-dark input[type="number"],
+body.theme-dark input[type="password"],
+body.theme-dark input[type="email"],
+body.theme-dark input[type="tel"] {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark input[type="text"]:focus,
+body.theme-dark input[type="number"]:focus,
+body.theme-dark input[type="password"]:focus,
+body.theme-dark input[type="email"]:focus,
+body.theme-dark input[type="tel"]:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    outline: none;
+}
+
+/* Стилі для всіх select елементів */
+body.theme-dark select {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    outline: none;
+}
+
+body.theme-dark select option {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.theme-dark select option:checked {
+    background: #667eea;
+    color: #fff;
+}
+
+/* Стилі для textarea */
+body.theme-dark textarea {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    outline: none;
+}
+
+/* Покращення контрасту для важливих елементів */
+body.theme-dark .summary-main {
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .card h2 {
+    color: #fff;
+}
+
+body.theme-dark .category-header h3 {
+    color: #667eea;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Стилі для disabled елементів */
+body.theme-dark input:disabled,
+body.theme-dark select:disabled,
+body.theme-dark textarea:disabled,
+body.theme-dark button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #1a1a1a;
+    color: #666;
+}
+
+/* Стилі для активних елементів */
+body.theme-dark .btn-add:active,
+body.theme-dark .btn-clear:active,
+body.theme-dark .btn-export:active,
+body.theme-dark .btn-delete:active,
+body.theme-dark .btn-edit-mode:active {
+    transform: scale(0.98);
+}
+
+/* Стилі для фокусу на кнопках */
+body.theme-dark button:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+body.theme-dark input:focus-visible,
+body.theme-dark select:focus-visible,
+body.theme-dark textarea:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Стилі для item prices display */
+body.theme-dark .item-prices-display {
+    background: transparent;
+}
+
+body.theme-dark .item-prices-display label:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 4px;
+}
+
+/* Стилі для modal buttons */
+body.theme-dark .modal-buttons button {
+    transition: all 0.2s;
+}
+
+/* Стилі для form group */
+body.theme-dark .form-group {
+    background: transparent;
+}
+
+/* Стилі для add car form select */
+body.theme-dark #copyFromCar {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark #copyFromCar:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark #copyFromCar option {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+/* Стилі для label в add car form */
+body.theme-dark .add-car-form label {
+    color: #b0b0b0;
+}
+
+@media (max-width: 900px) {
+    header > div {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .card-header-with-button {
+        flex-wrap: nowrap;
+    }
+    .card-header-with-button h2 {
+        font-size: 16px;
+    }
+    .card-header-with-button .btn-edit-mode {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    .category {
+        padding: 12px;
+    }
+    .edit-mode .item {
+        flex-wrap: wrap;
+    }
+    .edit-mode .item-name-input {
+        min-width: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+    }
+    .edit-mode .item-price {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 8px;
+    }
+}
+
