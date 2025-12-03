@@ -223,7 +223,7 @@ function setupFirebaseListener() {
                             renderCategories();
                             updateTotals();
                             console.log('Дані синхронізовано з Firebase');
-                            showSyncStatus('Дані оновлено з сервера', true);
+                            showSyncStatus('success');
                             // Зняти прапорець через затримку
                             setTimeout(() => {
                                 isSyncing = false;
@@ -283,33 +283,47 @@ function setupFirebaseListener() {
 }
 
 // Показати індикатор синхронізації
-function showSyncStatus(text, isSuccess = false) {
+// state: 'loading', 'success', 'error'
+function showSyncStatus(state = 'loading') {
     const syncStatus = document.getElementById('syncStatus');
-    const syncText = document.getElementById('syncText');
-    const syncIcon = document.getElementById('syncIcon');
     
-    if (syncStatus && syncText && syncIcon) {
-        syncStatus.style.display = 'flex';
-        syncText.textContent = text;
-        syncIcon.textContent = isSuccess ? '✅' : '🔄';
+    if (syncStatus) {
+        // Видалити всі попередні класи стану
+        syncStatus.classList.remove('loading', 'success', 'error');
         
-        // Автоматично приховати через 3 секунди, якщо успішно
-        if (isSuccess) {
+        // Додати новий клас стану
+        if (state === 'loading' || state === 'success' || state === 'error') {
+            syncStatus.classList.add(state);
+        } else {
+            // За замовчуванням - loading
+            syncStatus.classList.add('loading');
+        }
+        
+        // Для успішного стану - автоматично повернути до loading через 2 секунди
+        if (state === 'success') {
             setTimeout(() => {
-                if (syncStatus) {
-                    syncStatus.style.display = 'none';
+                if (syncStatus && syncStatus.classList.contains('success')) {
+                    syncStatus.classList.remove('success');
+                    syncStatus.classList.add('loading');
+                }
+            }, 2000);
+        }
+        
+        // Для помилки - автоматично повернути до loading через 3 секунди
+        if (state === 'error') {
+            setTimeout(() => {
+                if (syncStatus && syncStatus.classList.contains('error')) {
+                    syncStatus.classList.remove('error');
+                    syncStatus.classList.add('loading');
                 }
             }, 3000);
         }
     }
 }
 
-// Приховати індикатор синхронізації
+// Приховати індикатор синхронізації (залишаємо завжди видимим, просто скидаємо до loading)
 function hideSyncStatus() {
-    const syncStatus = document.getElementById('syncStatus');
-    if (syncStatus) {
-        syncStatus.style.display = 'none';
-    }
+    showSyncStatus('loading');
 }
 
 // Збереження даних в Firebase
@@ -351,7 +365,7 @@ async function saveCategoriesToFirebase() {
     try {
         isSyncing = true; // Встановити прапорець, щоб не викликати слухача
         console.log('📤 Початок збереження категорій в Firebase...');
-        showSyncStatus('Збереження змін...', false);
+        showSyncStatus('loading');
         
         // Зберегти поточний стан для порівняння
         const dataToSave = JSON.parse(JSON.stringify(categories));
@@ -361,7 +375,7 @@ async function saveCategoriesToFirebase() {
         // Також зберегти в localStorage як резерв
         localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
         console.log('✅ Дані збережено в Firebase та localStorage');
-        showSyncStatus('Зміни збережено та синхронізовано', true);
+        showSyncStatus('success');
         
         // Зняти прапорець через більшу затримку, щоб слухач не спрацював
         setTimeout(() => {
@@ -380,9 +394,9 @@ async function saveCategoriesToFirebase() {
             console.error('   3. Realtime Database → Rules');
             console.error('   4. Встановіть правила: { "rules": { "cars": { ".read": true, ".write": true, "$carId": { "categories": { ".read": true, ".write": true } } } } }');
             console.error('   5. Натисніть "Publish"');
-            showSyncStatus('Помилка: Немає дозволу на запис. Перевірте правила Firebase. Деталі в консолі (F12).', false);
+            showSyncStatus('error');
         } else {
-            showSyncStatus('Помилка синхронізації. Використовується локальне збереження.', false);
+            showSyncStatus('error');
         }
         
         // У випадку помилки зберегти в localStorage
@@ -2039,6 +2053,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     // Застосувати збережену тему
     applyTheme(currentTheme);
+    
+    // Ініціалізувати індикатор синхронізації
+    showSyncStatus('loading');
     
     // Завантажити курс валют
     const savedRate = localStorage.getItem('exchangeRate');
