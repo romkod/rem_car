@@ -566,18 +566,84 @@ function renderCategories() {
         document.body.classList.remove('edit-mode');
     }
 
-    categories.forEach(cat => {
+    categories.forEach((cat, index) => {
         // Блок категорії з чекбоксами
         const catDiv = document.createElement("div");
         catDiv.className = "category";
         catDiv.dataset.categoryId = cat.id;
+        catDiv.dataset.categoryIndex = index;
+        
+        // Додати можливість перетягування (тільки в режимі редагування)
+        if (editMode) {
+            catDiv.draggable = true;
+            catDiv.style.cursor = "move";
+            
+            // Обробник початку перетягування
+            catDiv.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', cat.id);
+                e.dataTransfer.setData('categoryIndex', index.toString());
+                catDiv.classList.add('dragging');
+            });
+            
+            // Обробник завершення перетягування
+            catDiv.addEventListener('dragend', (e) => {
+                catDiv.classList.remove('dragging');
+                // Видалити клас drag-over з усіх категорій
+                document.querySelectorAll('.category').forEach(c => {
+                    c.classList.remove('drag-over');
+                });
+            });
+            
+            // Обробник наведення під час перетягування
+            catDiv.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                const draggedCategoryId = e.dataTransfer.getData('text/plain');
+                const targetCategoryId = cat.id;
+                
+                // Додати візуальний індикатор
+                if (draggedCategoryId && draggedCategoryId !== targetCategoryId) {
+                    catDiv.classList.add('drag-over');
+                }
+            });
+            
+            // Обробник виходу з області
+            catDiv.addEventListener('dragleave', (e) => {
+                catDiv.classList.remove('drag-over');
+            });
+            
+            // Обробник скидання
+            catDiv.addEventListener('drop', (e) => {
+                e.preventDefault();
+                catDiv.classList.remove('drag-over');
+                
+                const draggedCategoryId = e.dataTransfer.getData('text/plain');
+                const targetCategoryId = cat.id;
+                
+                if (draggedCategoryId !== targetCategoryId) {
+                    const draggedIndex = categories.findIndex(c => c.id === draggedCategoryId);
+                    const targetIndex = categories.findIndex(c => c.id === targetCategoryId);
+                    
+                    if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
+                        moveCategory(draggedIndex, targetIndex);
+                    }
+                }
+            });
+        }
 
         const header = document.createElement("div");
         header.className = "category-header";
         header.style.cursor = "pointer";
         header.onclick = (e) => {
-            // Не згортати, якщо клікнуто на кнопку видалення
-            if (e.target.classList.contains('btn-delete-category')) {
+            // Не згортати, якщо клікнуто на кнопку видалення або іконку перетягування
+            if (e.target.classList.contains('btn-delete-category') || 
+                e.target.classList.contains('drag-handle')) {
+                return;
+            }
+            // Не згортати, якщо відбувається перетягування
+            if (catDiv.classList.contains('dragging')) {
                 return;
             }
             toggleCategory(cat.id);
@@ -616,6 +682,21 @@ function renderCategories() {
         headerLeft.style.gap = "8px";
         headerLeft.style.flex = "1";
         headerLeft.appendChild(collapseBtn);
+        
+        // Іконка перетягування (тільки в режимі редагування)
+        if (editMode) {
+            const dragHandle = document.createElement("span");
+            dragHandle.className = "drag-handle";
+            dragHandle.innerHTML = "⋮⋮";
+            dragHandle.style.cursor = "move";
+            dragHandle.style.color = "#999";
+            dragHandle.style.fontSize = "16px";
+            dragHandle.style.userSelect = "none";
+            dragHandle.style.marginRight = "4px";
+            dragHandle.title = "Перетягніть для зміни порядку";
+            headerLeft.appendChild(dragHandle);
+        }
+        
         headerLeft.appendChild(title);
 
         const headerRight = document.createElement("div");
@@ -1650,6 +1731,30 @@ function deleteCategory(categoryId) {
         renderCategories();
         updateTotals();
     }
+}
+
+// Функція для переміщення категорії
+function moveCategory(fromIndex, toIndex) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
+        fromIndex >= categories.length || toIndex >= categories.length) {
+        return;
+    }
+    
+    // Перемістити категорію в масиві
+    const [movedCategory] = categories.splice(fromIndex, 1);
+    categories.splice(toIndex, 0, movedCategory);
+    
+    // Зберегти новий порядок
+    saveCategories();
+    if (firebaseInitialized && !isSyncing) {
+        saveCategoriesToFirebase().catch(err => {
+            console.error('Помилка збереження після переміщення категорії в Firebase:', err);
+        });
+    }
+    
+    // Перерендерити категорії
+    renderCategories();
+    updateTotals();
 }
 
 // Функція перемикання згортання/розгортання категорії
