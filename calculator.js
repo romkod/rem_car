@@ -289,10 +289,9 @@ function showSyncStatus(text, isSuccess = false) {
     const syncIcon = document.getElementById('syncIcon');
     
     if (syncStatus && syncText && syncIcon) {
-        syncStatus.style.display = 'block';
+        syncStatus.style.display = 'flex';
         syncText.textContent = text;
         syncIcon.textContent = isSuccess ? '✅' : '🔄';
-        syncStatus.style.color = isSuccess ? '#28a745' : '#1f4f7b';
         
         // Автоматично приховати через 3 секунди, якщо успішно
         if (isSuccess) {
@@ -1390,7 +1389,7 @@ function clearSelection() {
 // Експорт переліку вибраних елементів у буфер обміну
 function exportSelection() {
     const checkboxes = document.querySelectorAll("input[type='checkbox'][data-price]");
-    const selected = [];
+    const selectedByCategory = {}; // Об'єкт для групування по категоріях
     let total = 0;
 
     checkboxes.forEach(cb => {
@@ -1400,29 +1399,108 @@ function exportSelection() {
             const itemId = cb.dataset.itemId;
             const categoryId = cb.dataset.categoryId;
             
-            // Знайти елемент для отримання описів цін
+            // Знайти категорію та елемент
             const category = categories.find(cat => cat.id === categoryId);
             const item = category ? category.items.find(it => it.id === itemId) : null;
             
-            let labelText = cb.parentElement.textContent.trim();
-            let priceText = formatCurrency(price);
+            if (!category) return; // Якщо категорію не знайдено, пропустити
             
-            // Використати просту ціну
-            if (item) {
-                priceText = formatCurrency(item.price || 0);
+            // Отримати назву категорії
+            const categoryName = category.name || 'Без категорії';
+            
+            // Ініціалізувати масив для категорії, якщо його ще немає
+            if (!selectedByCategory[categoryName]) {
+                selectedByCategory[categoryName] = [];
             }
             
-            selected.push(`- ${labelText} — ${priceText}`);
+            // Отримати назву елемента
+            let itemName = item ? item.name : '';
+            
+            // Якщо назви немає, спробувати отримати з label
+            if (!itemName) {
+                const label = cb.parentElement;
+                if (label) {
+                    // Отримати текст label, але виключити текст з priceSpan
+                    const labelClone = label.cloneNode(true);
+                    const priceSpan = labelClone.querySelector('.item-price');
+                    if (priceSpan) {
+                        priceSpan.remove();
+                    }
+                    itemName = labelClone.textContent.trim();
+                }
+            }
+            
+            // Якщо все ще немає назви, використати текст з чекбокса
+            if (!itemName) {
+                itemName = cb.parentElement.textContent.trim();
+                // Видалити текст ціни, якщо він є
+                itemName = itemName.replace(/\s*—\s*[\d\s,\.]+.*$/, '').trim();
+            }
+            
+            // Визначити ціну для відображення
+            let priceText = formatCurrency(price);
+            let priceValue = price;
+            
+            // Якщо є елемент з множинними цінами, використати вибрану ціну
+            if (item && item.prices && item.prices.length > 0) {
+                const selectedPriceIndex = item.selectedPriceIndex || 0;
+                const selectedPriceObj = item.prices[selectedPriceIndex];
+                if (selectedPriceObj) {
+                    priceValue = selectedPriceObj.price || 0;
+                    // Конвертувати в UAH, якщо потрібно
+                    if (item.currency === 'UAH') {
+                        priceValue = Math.round(priceValue * exchangeRate);
+                    }
+                    priceText = formatCurrency(priceValue);
+                    
+                    // Додати опис ціни, якщо він є
+                    if (selectedPriceObj.description && selectedPriceObj.description.trim()) {
+                        itemName += ` (${selectedPriceObj.description.trim()})`;
+                    }
+                }
+            } else if (item) {
+                // Використати просту ціну
+                priceValue = item.price || 0;
+                if (item.currency === 'UAH') {
+                    priceValue = Math.round(priceValue * exchangeRate);
+                }
+                priceText = formatCurrency(priceValue);
+            }
+            
+            selectedByCategory[categoryName].push({
+                name: itemName,
+                price: priceText,
+                priceValue: priceValue
+            });
         }
     });
 
     let text;
-    if (selected.length === 0) {
+    if (Object.keys(selectedByCategory).length === 0) {
         text = "Не вибрано жодного елемента.";
     } else {
         text = "Перелік пошкоджених елементів та орієнтовна вартість ремонту:\n\n";
-        text += selected.join("\n");
-        text += "\n\nЗагальна сума: " + formatCurrency(total);
+        
+        // Пройтися по всіх категоріях
+        Object.keys(selectedByCategory).forEach(categoryName => {
+            const items = selectedByCategory[categoryName];
+            let categoryTotal = 0;
+            
+            // Додати назву категорії
+            text += `\n${categoryName}:\n`;
+            
+            // Додати елементи категорії
+            items.forEach(item => {
+                text += `  - ${item.name} — ${item.price}\n`;
+                categoryTotal += item.priceValue;
+            });
+            
+            // Додати підсумок по категорії
+            text += `  Підсумок по категорії: ${formatCurrency(categoryTotal)}\n`;
+        });
+        
+        text += "\n═══════════════════════════════════\n";
+        text += `Загальна сума: ${formatCurrency(total)}`;
     }
 
     navigator.clipboard.writeText(text).then(

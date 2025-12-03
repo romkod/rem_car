@@ -14,29 +14,40 @@ body {
     max-width: 100vw;
 }
 
-/* Плаваюча кнопка перемикання тем */
+/* Кнопка перемикання тем в header */
 .theme-toggle-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: static;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
+
 .theme-toggle-btn:hover {
-    transform: scale(1.1) rotate(15deg);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+/* Стилі для світлої теми */
+body:not(.theme-dark) .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+body:not(.theme-dark) .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Стилі для опцій теми */
@@ -123,14 +134,19 @@ body.theme-dark .category-header h3 {
 body.theme-dark .category-header span {
     color: #b0b0b0;
 }
+/* Стилі для темної теми */
 body.theme-dark .theme-toggle-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.5);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
+
 body.theme-dark .theme-toggle-btn:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    background: rgba(102, 126, 234, 0.5);
+    border-color: rgba(102, 126, 234, 0.7);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transform: scale(1.05);
 }
 body.theme-dark .item-price {
     color: #e0e0e0;
@@ -218,14 +234,42 @@ body.theme-dark .theme-option span {
 /* Відображення курсу валют */
 .exchange-rate {
     background: rgba(255, 255, 255, 0.1);
-    padding: 8px 24px;
+    padding: 8px 16px;
     text-align: center;
     font-size: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    border: none;
 }
+
 body.theme-dark .exchange-rate {
     background: rgba(0, 0, 0, 0.2);
-    border-top-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Стилі для індикатора синхронізації в header */
+#syncStatus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+body.theme-dark #syncStatus {
+    background: rgba(40, 167, 69, 0.15);
+    border-color: rgba(40, 167, 69, 0.4);
+    color: #4ade80;
+}
+
+#syncStatus #syncIcon {
+    font-size: 14px;
+}
+
+#syncStatus #syncText {
+    font-weight: 500;
 }
 
 /* Стилі для вибору валюти в режимі редагування */
@@ -246,6 +290,16 @@ body.theme-dark .exchange-rate {
 body.theme-dark .item-currency-select {
     background: #1a1a1a;
     border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .item-currency-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark .item-currency-select option {
+    background: #2d2d2d;
     color: #e0e0e0;
 }
 header {
@@ -304,8 +358,32 @@ body.theme-dark .btn-back-to-list:hover {
     padding: 16px 0;
     text-align: center;
 }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .header-info {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
 .header-text {
     text-align: center;
+    flex: 1;
 }
 @media (max-width: 900px) {
     .header-content {
@@ -313,6 +391,18 @@ body.theme-dark .btn-back-to-list:hover {
         align-items: center;
         gap: 12px;
     }
+    
+    .header-actions {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .header-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
     .header-text {
         text-align: center;
     }
@@ -1244,6 +1334,196 @@ body.theme-dark .btn-edit-mode.active:hover {
     background: #c82333;
 }
 
+/* Темні стилі для всіх кнопок */
+body.theme-dark button {
+    color: #e0e0e0;
+}
+
+body.theme-dark .btn-edit {
+    background: #ffc107;
+    color: #1a1a1a;
+}
+
+body.theme-dark .btn-edit:hover {
+    background: #e0a800;
+    color: #000;
+}
+
+body.theme-dark .btn-prices {
+    background: #17a2b8;
+    color: #fff;
+}
+
+body.theme-dark .btn-prices:hover {
+    background: #138496;
+}
+
+body.theme-dark .btn-view-original {
+    background: #667eea;
+    color: #fff;
+}
+
+body.theme-dark .btn-view-original:hover {
+    background: #5568d3;
+}
+
+body.theme-dark .btn-change-url {
+    background: #dc3545;
+    color: #fff;
+}
+
+body.theme-dark .btn-change-url:hover {
+    background: #c82333;
+}
+
+body.theme-dark .btn-open-new-tab {
+    background: #667eea;
+    color: #fff;
+}
+
+body.theme-dark .btn-open-new-tab:hover {
+    background: #5568d3;
+}
+
+body.theme-dark .btn-proxy-settings {
+    background: #6c757d;
+    color: #fff;
+}
+
+body.theme-dark .btn-proxy-settings:hover {
+    background: #5a6268;
+}
+
+/* Додаткові темні стилі для всіх елементів */
+body.theme-dark .header-container {
+    color: #fff;
+}
+
+body.theme-dark .header-content {
+    color: #fff;
+}
+
+body.theme-dark .header-content h1 {
+    color: #fff;
+}
+
+body.theme-dark .header-content p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Темні стилі для всіх input та textarea */
+body.theme-dark input[type="text"],
+body.theme-dark input[type="number"],
+body.theme-dark input[type="password"],
+body.theme-dark textarea {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark input[type="text"]:focus,
+body.theme-dark input[type="number"]:focus,
+body.theme-dark input[type="password"]:focus,
+body.theme-dark textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark input[type="text"]::placeholder,
+body.theme-dark input[type="number"]::placeholder,
+body.theme-dark input[type="password"]::placeholder,
+body.theme-dark textarea::placeholder {
+    color: #666;
+}
+
+/* Темні стилі для checkbox та radio */
+body.theme-dark input[type="checkbox"],
+body.theme-dark input[type="radio"] {
+    accent-color: #667eea;
+}
+
+/* Темні стилі для disabled елементів */
+body.theme-dark input:disabled,
+body.theme-dark select:disabled,
+body.theme-dark textarea:disabled,
+body.theme-dark button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Темні стилі для всіх кнопок за замовчуванням */
+body.theme-dark button:not(.btn-edit-mode):not(.btn-add):not(.btn-delete):not(.btn-dependencies):not(.btn-clear):not(.btn-export):not(.btn-add-price):not(.btn-add-item):not(.btn-delete-category):not(.btn-collapse):not(.theme-toggle-btn):not(.btn-back-to-list):not(.btn-delete-car):not(.btn-view-original):not(.btn-change-url):not(.btn-open-new-tab):not(.btn-proxy-settings):not(.btn-prices):not(.btn-edit) {
+    background: #444;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.theme-dark button:not(.btn-edit-mode):not(.btn-add):not(.btn-delete):not(.btn-dependencies):not(.btn-clear):not(.btn-export):not(.btn-add-price):not(.btn-add-item):not(.btn-delete-category):not(.btn-collapse):not(.theme-toggle-btn):not(.btn-back-to-list):not(.btn-delete-car):not(.btn-view-original):not(.btn-change-url):not(.btn-open-new-tab):not(.btn-proxy-settings):not(.btn-prices):not(.btn-edit):hover {
+    background: #555;
+    border-color: #667eea;
+}
+
+/* Додаткові темні стилі для всіх елементів */
+body.theme-dark .header-container {
+    color: #fff;
+}
+
+body.theme-dark .header-content {
+    color: #fff;
+}
+
+body.theme-dark .header-content h1 {
+    color: #fff;
+}
+
+body.theme-dark .header-content p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Темні стилі для всіх input та textarea */
+body.theme-dark input[type="text"],
+body.theme-dark input[type="number"],
+body.theme-dark input[type="password"],
+body.theme-dark textarea {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark input[type="text"]:focus,
+body.theme-dark input[type="number"]:focus,
+body.theme-dark input[type="password"]:focus,
+body.theme-dark textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark input[type="text"]::placeholder,
+body.theme-dark input[type="number"]::placeholder,
+body.theme-dark input[type="password"]::placeholder,
+body.theme-dark textarea::placeholder {
+    color: #666;
+}
+
+/* Темні стилі для checkbox та radio */
+body.theme-dark input[type="checkbox"],
+body.theme-dark input[type="radio"] {
+    accent-color: #667eea;
+}
+
+/* Темні стилі для disabled елементів */
+body.theme-dark input:disabled,
+body.theme-dark select:disabled,
+body.theme-dark textarea:disabled,
+body.theme-dark button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 body.theme-dark .add-item-form input {
     background: #1a1a1a;
     border-color: #444;
@@ -1262,6 +1542,88 @@ body.theme-dark .add-item-form .btn-add-item {
 
 body.theme-dark .add-item-form .btn-add-item:hover {
     background: #218838;
+}
+
+/* Темні стилі для кнопки видалення ціни в формі */
+body.theme-dark .edit-mode .add-item-form .add-item-prices .price-field-row .price-remove-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+}
+
+body.theme-dark .edit-mode .add-item-form .add-item-prices .price-field-row .price-remove-btn:hover {
+    background: #c82333;
+}
+
+/* Темні стилі для кнопки додавання ціни */
+body.theme-dark .edit-mode .add-item-form .btn-add-price {
+    background: #28a745;
+    color: #fff;
+    border: none;
+}
+
+body.theme-dark .edit-mode .add-item-form .btn-add-price:hover {
+    background: #218838;
+}
+
+/* Темні стилі для кнопки видалення ціни в формі */
+body.theme-dark .edit-mode .add-item-form .add-item-prices .price-field-row .price-remove-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+}
+
+body.theme-dark .edit-mode .add-item-form .add-item-prices .price-field-row .price-remove-btn:hover {
+    background: #c82333;
+}
+
+/* Темні стилі для модальних вікон */
+body.theme-dark .modal-buttons button {
+    transition: all 0.2s;
+}
+
+body.theme-dark .modal-buttons .btn-add,
+body.theme-dark .modal-buttons .btn-submit {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .modal-buttons .btn-add:hover,
+body.theme-dark .modal-buttons .btn-submit:hover {
+    background: #218838;
+}
+
+body.theme-dark .modal-buttons .btn-cancel,
+body.theme-dark .modal-buttons .btn-clear {
+    background: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .modal-buttons .btn-cancel:hover,
+body.theme-dark .modal-buttons .btn-clear:hover {
+    background: #555;
+}
+
+body.theme-dark .modal-buttons .btn-add,
+body.theme-dark .modal-buttons .btn-submit {
+    background: #28a745;
+    color: #fff;
+}
+
+body.theme-dark .modal-buttons .btn-add:hover,
+body.theme-dark .modal-buttons .btn-submit:hover {
+    background: #218838;
+}
+
+body.theme-dark .modal-buttons .btn-cancel,
+body.theme-dark .modal-buttons .btn-clear {
+    background: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark .modal-buttons .btn-cancel:hover,
+body.theme-dark .modal-buttons .btn-clear:hover {
+    background: #555;
 }
 
 /* Scrollbar для темної теми */
@@ -1513,6 +1875,16 @@ body.theme-dark input[type="tel"]:focus {
 body.theme-dark select {
     background: #1a1a1a;
     border-color: #444;
+    color: #e0e0e0;
+}
+
+body.theme-dark select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+body.theme-dark select option {
+    background: #2d2d2d;
     color: #e0e0e0;
 }
 

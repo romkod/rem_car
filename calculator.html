@@ -10,9 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
-<!-- Плаваюча кнопка перемикання тем -->
-<button id="themeToggleBtn" class="theme-toggle-btn" title="Перемкнути тему">🎨</button>
-
 <header>
     <div class="header-container">
         <div class="header-content">
@@ -20,10 +17,18 @@
                 <h1 id="pageTitle">Що по ремонту?</h1>
                 <p>Поставте галочки навпроти пошкоджених елементів і отримайте орієнтовну суму ремонту.</p>
             </div>
-            <a href="index.html" class="btn-back-to-list" title="Повернутися до списку авто">← До списку</a>
+            <div class="header-actions">
+                <button id="themeToggleBtn" class="theme-toggle-btn" title="Перемкнути тему">🎨</button>
+                <a href="index.html" class="btn-back-to-list" title="Повернутися до списку авто">← До списку</a>
+            </div>
         </div>
-        <div id="exchangeRate" class="exchange-rate">
-            <span id="exchangeRateText">Завантаження курсу валют...</span>
+        <div class="header-info">
+            <div id="exchangeRate" class="exchange-rate">
+                <span id="exchangeRateText">Завантаження курсу валют...</span>
+            </div>
+            <small class="note" id="syncStatus" style="display: none; color: #28a745;">
+                <span id="syncIcon">🔄</span> <span id="syncText">Синхронізація...</span>
+            </small>
         </div>
     </div>
 </header>
@@ -39,9 +44,6 @@
                 <button class="btn-edit-mode" id="btnEditMode">Режим редагування</button>
             </div>
                 <small class="note" id="noteText">Ціни орієнтовні — їх можна відредагувати в режимі редагування.</small>
-                <small class="note" id="syncStatus" style="display: none; color: #28a745; margin-top: 4px;">
-                    <span id="syncIcon">🔄</span> <span id="syncText">Синхронізація...</span>
-                </small>
                 
                 <!-- Форма додавання категорії (показується в режимі редагування) -->
                 <div id="addCategoryForm" class="edit-form" style="display: none;">
