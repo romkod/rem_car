@@ -161,34 +161,53 @@ function loadCarInfo(carId) {
 
 // Налаштування слухача Firebase для синхронізації в реальному часі
 function setupFirebaseListener() {
+    console.log('🔧 setupFirebaseListener() викликано');
+    console.log('Статус:', {
+        firebaseInitialized,
+        hasDatabase: !!database,
+        currentCarId
+    });
+    
     if (!firebaseInitialized || !database) {
-        console.warn('Firebase не ініціалізовано або database не встановлено');
+        console.warn('⚠️ Firebase не ініціалізовано або database не встановлено');
         return;
     }
     
     if (!currentCarId) {
-        console.warn('currentCarId не встановлено, не можу налаштувати слухача. Спробую пізніше...');
+        console.warn('⚠️ currentCarId не встановлено, не можу налаштувати слухача. Спробую пізніше...');
         // Спробувати налаштувати слухача пізніше
         setTimeout(() => {
             if (currentCarId) {
+                console.log('Повторна спроба налаштувати слухача Firebase...');
                 setupFirebaseListener();
+            } else {
+                console.error('❌ currentCarId все ще не встановлено після затримки');
             }
         }, 1000);
         return;
     }
     
     try {
+        // Якщо слухач вже налаштовано, спочатку відключити його
+        if (categoriesRef) {
+            console.log('Відключення попереднього слухача Firebase...');
+            categoriesRef.off('value');
+        }
+        
         categoriesRef = database.ref(`cars/${currentCarId}/categories`);
-        console.log('Налаштування слухача Firebase для:', `cars/${currentCarId}/categories`);
+        console.log('✅ Налаштування слухача Firebase для:', `cars/${currentCarId}/categories`);
         
         // Слухач змін в базі даних
         categoriesRef.on('value', (snapshot) => {
+            console.log('📥 Слухач Firebase: отримано дані');
+            
             if (isSyncing) {
-                console.log('Слухач Firebase: пропускаємо оновлення, бо isSyncing = true');
+                console.log('⏸️ Слухач Firebase: пропускаємо оновлення, бо isSyncing = true');
                 return; // Якщо ми самі зберігаємо, не оновлювати
             }
             
             const data = snapshot.val();
+            console.log('📦 Дані з Firebase:', data ? 'є дані' : 'немає даних');
             if (data) {
                 try {
                     const loadedCategories = Array.isArray(data) ? data : Object.values(data);
@@ -238,29 +257,39 @@ function setupFirebaseListener() {
                 }
             } else {
                 // Якщо в Firebase немає даних, завантажити з localStorage або дефолтні
+                console.log('📭 В Firebase немає даних, перевіряю localStorage...');
                 const localData = localStorage.getItem(`repairCalculatorCategories_${currentCarId}`);
                 if (localData) {
                     try {
+                        console.log('📥 Завантаження даних з localStorage...');
                         categories = JSON.parse(localData);
                         // Зберегти в Firebase для синхронізації
                         if (categories.length > 0) {
+                            console.log('📤 Збереження даних з localStorage в Firebase...');
                             isSyncing = true;
                             categoriesRef.set(categories).then(() => {
-                                console.log('Дані з localStorage збережено в Firebase');
+                                console.log('✅ Дані з localStorage збережено в Firebase');
                                 setTimeout(() => { isSyncing = false; }, 500);
+                            }).catch(err => {
+                                console.error('❌ Помилка збереження в Firebase:', err);
+                                isSyncing = false;
                             });
                         }
                     } catch (e) {
-                        console.error('Помилка завантаження з localStorage:', e);
+                        console.error('❌ Помилка завантаження з localStorage:', e);
                     }
                 } else {
                     // Якщо немає даних ніде, використати дефолтні та зберегти
+                    console.log('📝 Немає даних ніде, використовую дефолтні категорії...');
                     categories = getDefaultCategories();
                     isSyncing = true;
                     categoriesRef.set(categories).then(() => {
-                        console.log('Дефолтні дані збережено в Firebase');
+                        console.log('✅ Дефолтні дані збережено в Firebase');
                         localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
                         setTimeout(() => { isSyncing = false; }, 500);
+                    }).catch(err => {
+                        console.error('❌ Помилка збереження дефолтних даних в Firebase:', err);
+                        isSyncing = false;
                     });
                 }
                 renderCategories();
@@ -328,7 +357,16 @@ function hideSyncStatus() {
 
 // Збереження даних в Firebase
 async function saveCategoriesToFirebase() {
+    console.log('💾 saveCategoriesToFirebase() викликано');
+    console.log('Статус:', {
+        firebaseInitialized,
+        hasDatabase: !!database,
+        currentCarId,
+        categoriesCount: categories.length
+    });
+    
     if (!firebaseInitialized || !database) {
+        console.warn('⚠️ Firebase не налаштовано, зберігаю тільки в localStorage');
         // Якщо Firebase не налаштовано, використати localStorage
         saveCategories();
         return;
@@ -336,7 +374,7 @@ async function saveCategoriesToFirebase() {
     
     // Перевірити, чи встановлено currentCarId
     if (!currentCarId) {
-        console.warn('currentCarId не встановлено, не можу зберегти в Firebase');
+        console.error('❌ currentCarId не встановлено, не можу зберегти в Firebase');
         saveCategories();
         return;
     }
@@ -2200,19 +2238,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchExchangeRate();
     
     // Спробувати ініціалізувати Firebase
-    initFirebase();
+    const firebaseInitResult = initFirebase();
+    console.log('Результат ініціалізації Firebase:', firebaseInitResult);
     
     // Налаштувати слухача Firebase після встановлення currentCarId
-    if (firebaseInitialized && currentCarId) {
-        setupFirebaseListener();
-    }
+    // Використати setTimeout, щоб переконатися, що все ініціалізовано
+    setTimeout(() => {
+        if (firebaseInitialized && currentCarId) {
+            console.log('Налаштування слухача Firebase після ініціалізації...');
+            setupFirebaseListener();
+        } else {
+            console.warn('Не можу налаштувати слухача Firebase:', {
+                firebaseInitialized,
+                currentCarId
+            });
+        }
+    }, 500);
     
     // Завантажити дані (з Firebase або localStorage)
     if (firebaseInitialized) {
         // Дані будуть завантажені через слухача Firebase
         console.log('Очікування даних з Firebase...');
+        // Завантажити з localStorage як тимчасове рішення, поки не прийдуть дані з Firebase
+        const localCategories = loadCategories();
+        if (localCategories && localCategories.length > 0) {
+            categories = localCategories;
+            renderCategories();
+            updateTotals();
+        }
     } else {
         // Якщо Firebase не налаштовано, використати localStorage
+        console.log('Firebase не ініціалізовано, використовую localStorage');
         categories = loadCategories();
         renderCategories();
         updateTotals();
