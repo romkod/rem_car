@@ -484,7 +484,19 @@ function loadCategories() {
 
 // Збереження даних в localStorage
 function saveCategories() {
-    localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
+    if (!currentCarId) {
+        console.error('⚠️ currentCarId не встановлено, не можу зберегти категорії');
+        return;
+    }
+    
+    try {
+        const key = `repairCalculatorCategories_${currentCarId}`;
+        const data = JSON.stringify(categories);
+        localStorage.setItem(key, data);
+        console.log('✅ Категорії збережено в localStorage:', key, 'кількість:', categories.length);
+    } catch (error) {
+        console.error('❌ Помилка збереження категорій в localStorage:', error);
+    }
     // НЕ викликати saveCategoriesToFirebase() тут, щоб уникнути циклів
     // Firebase буде збережено через debounce в обробниках змін
 }
@@ -1737,6 +1749,12 @@ function deleteCategory(categoryId) {
 function moveCategory(fromIndex, toIndex) {
     if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
         fromIndex >= categories.length || toIndex >= categories.length) {
+        console.warn('Невірні індекси для переміщення:', fromIndex, toIndex);
+        return;
+    }
+    
+    if (!currentCarId) {
+        console.error('currentCarId не встановлено, не можу зберегти після переміщення');
         return;
     }
     
@@ -1744,12 +1762,24 @@ function moveCategory(fromIndex, toIndex) {
     const [movedCategory] = categories.splice(fromIndex, 1);
     categories.splice(toIndex, 0, movedCategory);
     
+    console.log('Категорію переміщено з індексу', fromIndex, 'на індекс', toIndex);
+    console.log('Поточний currentCarId:', currentCarId);
+    console.log('Кількість категорій:', categories.length);
+    
     // Зберегти новий порядок
-    saveCategories();
-    if (firebaseInitialized && !isSyncing) {
-        saveCategoriesToFirebase().catch(err => {
-            console.error('Помилка збереження після переміщення категорії в Firebase:', err);
-        });
+    try {
+        saveCategories();
+        console.log('Категорії збережено в localStorage');
+        
+        if (firebaseInitialized && !isSyncing) {
+            saveCategoriesToFirebase().catch(err => {
+                console.error('Помилка збереження після переміщення категорії в Firebase:', err);
+            });
+        } else {
+            console.log('Firebase не ініціалізовано або виконується синхронізація');
+        }
+    } catch (error) {
+        console.error('Помилка збереження після переміщення:', error);
     }
     
     // Перерендерити категорії
