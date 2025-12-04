@@ -161,75 +161,59 @@ function loadCarInfo(carId) {
 
 // Налаштування слухача Firebase для синхронізації в реальному часі
 function setupFirebaseListener() {
-    console.log('🔧 setupFirebaseListener() викликано');
-    console.log('Статус:', {
-        firebaseInitialized,
-        hasDatabase: !!database,
-        currentCarId
-    });
-    
     if (!firebaseInitialized || !database) {
-        console.warn('⚠️ Firebase не ініціалізовано або database не встановлено');
+        console.warn('Firebase не ініціалізовано або database не встановлено');
         return;
     }
     
     if (!currentCarId) {
-        console.warn('⚠️ currentCarId не встановлено, не можу налаштувати слухача. Спробую пізніше...');
+        console.warn('currentCarId не встановлено, не можу налаштувати слухача. Спробую пізніше...');
         // Спробувати налаштувати слухача пізніше
         setTimeout(() => {
             if (currentCarId) {
-                console.log('Повторна спроба налаштувати слухача Firebase...');
                 setupFirebaseListener();
-            } else {
-                console.error('❌ currentCarId все ще не встановлено після затримки');
             }
         }, 1000);
         return;
     }
     
     try {
-        // Якщо слухач вже налаштовано, спочатку відключити його
-        if (categoriesRef) {
-            console.log('Відключення попереднього слухача Firebase...');
-            categoriesRef.off('value');
-        }
-        
         categoriesRef = database.ref(`cars/${currentCarId}/categories`);
-        const fullPath = `cars/${currentCarId}/categories`;
-        console.log('✅ Налаштування слухача Firebase для:', fullPath);
-        console.log('📍 Повний шлях до бази:', database.app.options.databaseURL + '/' + fullPath);
-        
-        // Тест підключення - спробувати прочитати дані один раз
-        categoriesRef.once('value')
-            .then((snapshot) => {
-                console.log('✅ Тест підключення до Firebase успішний');
-                const testData = snapshot.val();
-                console.log('📊 Тестові дані:', testData ? 'є дані' : 'немає даних');
-            })
-            .catch((error) => {
-                console.error('❌ Помилка тесту підключення до Firebase:', error);
-                console.error('Деталі помилки:', error.code, error.message);
-                if (error.code === 'PERMISSION_DENIED') {
-                    console.error('🚨 ПОМИЛКА: Немає дозволу на читання з Firebase!');
-                    console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console');
-                }
-            });
+        console.log('Налаштування слухача Firebase для:', `cars/${currentCarId}/categories`);
         
         // Слухач змін в базі даних
         categoriesRef.on('value', (snapshot) => {
-            console.log('📥 Слухач Firebase: отримано дані');
-            
             if (isSyncing) {
-                console.log('⏸️ Слухач Firebase: пропускаємо оновлення, бо isSyncing = true');
+                console.log('Слухач Firebase: пропускаємо оновлення, бо isSyncing = true');
                 return; // Якщо ми самі зберігаємо, не оновлювати
             }
             
             const data = snapshot.val();
-            console.log('📦 Дані з Firebase:', data ? 'є дані' : 'немає даних');
             if (data) {
                 try {
                     const loadedCategories = Array.isArray(data) ? data : Object.values(data);
-                    if (loadedCategories.length > 0) {
+                    
+                    // Нормалізувати дані - переконатися, що всі категорії мають items
+                    const normalizedCategories = loadedCategories.map(cat => {
+                        if (!cat || typeof cat !== 'object') {
+                            return null;
+                        }
+                        // Ініціалізувати items, якщо його немає
+                        if (!cat.items || !Array.isArray(cat.items)) {
+                            cat.items = [];
+                        }
+                        // Переконатися, що є id
+                        if (!cat.id) {
+                            cat.id = generateId('cat');
+                        }
+                        // Переконатися, що є name
+                        if (!cat.name) {
+                            cat.name = 'Без назви';
+                        }
+                        return cat;
+                    }).filter(cat => cat !== null); // Видалити null значення
+                    
+                    if (normalizedCategories.length > 0) {
                         // Нормалізувати дані для порівняння (сортувати масиви та об'єкти)
                         const normalizeData = (obj) => {
                             if (obj === null || obj === undefined) return obj;
@@ -248,13 +232,13 @@ function setupFirebaseListener() {
                         };
                         
                         const currentDataStr = JSON.stringify(normalizeData(categories));
-                        const loadedDataStr = JSON.stringify(normalizeData(loadedCategories));
+                        const loadedDataStr = JSON.stringify(normalizeData(normalizedCategories));
                         
                         if (currentDataStr !== loadedDataStr) {
                             console.log('Дані змінилися, оновлюємо...');
                             // Встановити isSyncing перед оновленням, щоб уникнути циклів
                             isSyncing = true;
-                            categories = loadedCategories;
+                            categories = normalizedCategories;
                             // Зберегти також в localStorage як резерв
                             localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
                             renderCategories();
@@ -275,74 +259,37 @@ function setupFirebaseListener() {
                 }
             } else {
                 // Якщо в Firebase немає даних, завантажити з localStorage або дефолтні
-                console.log('📭 В Firebase немає даних, перевіряю localStorage...');
                 const localData = localStorage.getItem(`repairCalculatorCategories_${currentCarId}`);
                 if (localData) {
                     try {
-                        console.log('📥 Завантаження даних з localStorage...');
                         categories = JSON.parse(localData);
                         // Зберегти в Firebase для синхронізації
                         if (categories.length > 0) {
-                            console.log('📤 Збереження даних з localStorage в Firebase...');
                             isSyncing = true;
                             categoriesRef.set(categories).then(() => {
-                                console.log('✅ Дані з localStorage збережено в Firebase');
+                                console.log('Дані з localStorage збережено в Firebase');
                                 setTimeout(() => { isSyncing = false; }, 500);
-                            }).catch(err => {
-                                console.error('❌ Помилка збереження в Firebase:', err);
-                                isSyncing = false;
                             });
                         }
                     } catch (e) {
-                        console.error('❌ Помилка завантаження з localStorage:', e);
+                        console.error('Помилка завантаження з localStorage:', e);
                     }
                 } else {
                     // Якщо немає даних ніде, використати дефолтні та зберегти
-                    console.log('📝 Немає даних ніде, використовую дефолтні категорії...');
                     categories = getDefaultCategories();
                     isSyncing = true;
                     categoriesRef.set(categories).then(() => {
-                        console.log('✅ Дефолтні дані збережено в Firebase');
+                        console.log('Дефолтні дані збережено в Firebase');
                         localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
                         setTimeout(() => { isSyncing = false; }, 500);
-                    }).catch(err => {
-                        console.error('❌ Помилка збереження дефолтних даних в Firebase:', err);
-                        isSyncing = false;
                     });
                 }
                 renderCategories();
                 updateTotals();
             }
         }, (error) => {
-            console.error('❌ Помилка слухача Firebase:', error);
-            console.error('Деталі помилки:', {
-                code: error.code,
-                message: error.message,
-                stack: error.stack
-            });
-            
-            if (error.code === 'PERMISSION_DENIED') {
-                console.error('🚨 ПОМИЛКА: Немає дозволу на читання з Firebase!');
-                console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
-                console.error('   1. Відкрийте https://console.firebase.google.com/');
-                console.error('   2. Виберіть проект remcar-a23dc');
-                console.error('   3. Realtime Database → Rules');
-                console.error('   4. Встановіть правила:');
-                console.error('      {');
-                console.error('        "rules": {');
-                console.error('          "cars": {');
-                console.error('            ".read": true,');
-                console.error('            ".write": true');
-                console.error('          }');
-                console.error('        }');
-                console.error('      }');
-                showSyncStatus('error');
-            } else {
-                showSyncStatus('error');
-            }
-            
+            console.error('Помилка слухача Firebase:', error);
             // У випадку помилки використати localStorage
-            console.log('📥 Використовую дані з localStorage через помилку Firebase');
             categories = loadCategories();
             renderCategories();
             updateTotals();
@@ -402,16 +349,7 @@ function hideSyncStatus() {
 
 // Збереження даних в Firebase
 async function saveCategoriesToFirebase() {
-    console.log('💾 saveCategoriesToFirebase() викликано');
-    console.log('Статус:', {
-        firebaseInitialized,
-        hasDatabase: !!database,
-        currentCarId,
-        categoriesCount: categories.length
-    });
-    
     if (!firebaseInitialized || !database) {
-        console.warn('⚠️ Firebase не налаштовано, зберігаю тільки в localStorage');
         // Якщо Firebase не налаштовано, використати localStorage
         saveCategories();
         return;
@@ -419,7 +357,7 @@ async function saveCategoriesToFirebase() {
     
     // Перевірити, чи встановлено currentCarId
     if (!currentCarId) {
-        console.error('❌ currentCarId не встановлено, не можу зберегти в Firebase');
+        console.warn('currentCarId не встановлено, не можу зберегти в Firebase');
         saveCategories();
         return;
     }
@@ -513,15 +451,47 @@ async function verifyPassword(inputPassword) {
     return inputHash === PASSWORD_HASH;
 }
 
+// Генерація унікального ID
+function generateId(prefix = 'item') {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Завантаження даних з localStorage або використання дефолтних
 function loadCategories() {
     const saved = localStorage.getItem(`repairCalculatorCategories_${currentCarId}`);
     if (saved) {
         try {
             const loaded = JSON.parse(saved);
+            
+            // Перевірити, чи це масив
+            if (!Array.isArray(loaded)) {
+                console.warn('Дані з localStorage не є масивом, використовую дефолтні');
+                return getDefaultCategories();
+            }
+            
             // Ініціалізувати dependencies, currency та масив prices для старих даних
             loaded.forEach(cat => {
-                if (cat.items) {
+                // Перевірити, чи категорія валідна
+                if (!cat || typeof cat !== 'object') {
+                    return;
+                }
+                
+                // Ініціалізувати id, якщо його немає
+                if (!cat.id) {
+                    cat.id = generateId('cat');
+                }
+                
+                // Ініціалізувати name, якщо його немає
+                if (!cat.name) {
+                    cat.name = 'Без назви';
+                }
+                
+                // Ініціалізувати items, якщо його немає
+                if (!cat.items || !Array.isArray(cat.items)) {
+                    cat.items = [];
+                }
+                
+                if (cat.items && cat.items.length > 0) {
                     cat.items.forEach(item => {
                         if (!item.dependencies) {
                             item.dependencies = [];
@@ -567,19 +537,7 @@ function loadCategories() {
 
 // Збереження даних в localStorage
 function saveCategories() {
-    if (!currentCarId) {
-        console.error('⚠️ currentCarId не встановлено, не можу зберегти категорії');
-        return;
-    }
-    
-    try {
-        const key = `repairCalculatorCategories_${currentCarId}`;
-        const data = JSON.stringify(categories);
-        localStorage.setItem(key, data);
-        console.log('✅ Категорії збережено в localStorage:', key, 'кількість:', categories.length);
-    } catch (error) {
-        console.error('❌ Помилка збереження категорій в localStorage:', error);
-    }
+    localStorage.setItem(`repairCalculatorCategories_${currentCarId}`, JSON.stringify(categories));
     // НЕ викликати saveCategoriesToFirebase() тут, щоб уникнути циклів
     // Firebase буде збережено через debounce в обробниках змін
 }
@@ -661,7 +619,25 @@ function renderCategories() {
         document.body.classList.remove('edit-mode');
     }
 
+    // Перевірити та нормалізувати дані категорій
+    if (!Array.isArray(categories)) {
+        console.error('categories не є масивом:', categories);
+        categories = [];
+    }
+    
     categories.forEach((cat, index) => {
+        // Перевірити та ініціалізувати категорію
+        if (!cat || typeof cat !== 'object') {
+            console.warn('Пропускаю невалідну категорію:', cat);
+            return;
+        }
+        
+        // Ініціалізувати items, якщо його немає
+        if (!cat.items || !Array.isArray(cat.items)) {
+            console.warn('Категорія без items, ініціалізую порожній масив:', cat.id);
+            cat.items = [];
+        }
+        
         // Блок категорії з чекбоксами
         const catDiv = document.createElement("div");
         catDiv.className = "category";
@@ -1832,12 +1808,6 @@ function deleteCategory(categoryId) {
 function moveCategory(fromIndex, toIndex) {
     if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
         fromIndex >= categories.length || toIndex >= categories.length) {
-        console.warn('Невірні індекси для переміщення:', fromIndex, toIndex);
-        return;
-    }
-    
-    if (!currentCarId) {
-        console.error('currentCarId не встановлено, не можу зберегти після переміщення');
         return;
     }
     
@@ -1845,24 +1815,12 @@ function moveCategory(fromIndex, toIndex) {
     const [movedCategory] = categories.splice(fromIndex, 1);
     categories.splice(toIndex, 0, movedCategory);
     
-    console.log('Категорію переміщено з індексу', fromIndex, 'на індекс', toIndex);
-    console.log('Поточний currentCarId:', currentCarId);
-    console.log('Кількість категорій:', categories.length);
-    
     // Зберегти новий порядок
-    try {
-        saveCategories();
-        console.log('Категорії збережено в localStorage');
-        
-        if (firebaseInitialized && !isSyncing) {
-            saveCategoriesToFirebase().catch(err => {
-                console.error('Помилка збереження після переміщення категорії в Firebase:', err);
-            });
-        } else {
-            console.log('Firebase не ініціалізовано або виконується синхронізація');
-        }
-    } catch (error) {
-        console.error('Помилка збереження після переміщення:', error);
+    saveCategories();
+    if (firebaseInitialized && !isSyncing) {
+        saveCategoriesToFirebase().catch(err => {
+            console.error('Помилка збереження після переміщення категорії в Firebase:', err);
+        });
     }
     
     // Перерендерити категорії
@@ -2283,37 +2241,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchExchangeRate();
     
     // Спробувати ініціалізувати Firebase
-    const firebaseInitResult = initFirebase();
-    console.log('Результат ініціалізації Firebase:', firebaseInitResult);
+    initFirebase();
     
     // Налаштувати слухача Firebase після встановлення currentCarId
-    // Використати setTimeout, щоб переконатися, що все ініціалізовано
-    setTimeout(() => {
-        if (firebaseInitialized && currentCarId) {
-            console.log('Налаштування слухача Firebase після ініціалізації...');
-            setupFirebaseListener();
-        } else {
-            console.warn('Не можу налаштувати слухача Firebase:', {
-                firebaseInitialized,
-                currentCarId
-            });
-        }
-    }, 500);
+    if (firebaseInitialized && currentCarId) {
+        setupFirebaseListener();
+    }
     
     // Завантажити дані (з Firebase або localStorage)
     if (firebaseInitialized) {
         // Дані будуть завантажені через слухача Firebase
         console.log('Очікування даних з Firebase...');
-        // Завантажити з localStorage як тимчасове рішення, поки не прийдуть дані з Firebase
-        const localCategories = loadCategories();
-        if (localCategories && localCategories.length > 0) {
-            categories = localCategories;
-            renderCategories();
-            updateTotals();
-        }
     } else {
         // Якщо Firebase не налаштовано, використати localStorage
-        console.log('Firebase не ініціалізовано, використовую localStorage');
         categories = loadCategories();
         renderCategories();
         updateTotals();
