@@ -195,7 +195,25 @@ function setupFirebaseListener() {
         }
         
         categoriesRef = database.ref(`cars/${currentCarId}/categories`);
-        console.log('✅ Налаштування слухача Firebase для:', `cars/${currentCarId}/categories`);
+        const fullPath = `cars/${currentCarId}/categories`;
+        console.log('✅ Налаштування слухача Firebase для:', fullPath);
+        console.log('📍 Повний шлях до бази:', database.app.options.databaseURL + '/' + fullPath);
+        
+        // Тест підключення - спробувати прочитати дані один раз
+        categoriesRef.once('value')
+            .then((snapshot) => {
+                console.log('✅ Тест підключення до Firebase успішний');
+                const testData = snapshot.val();
+                console.log('📊 Тестові дані:', testData ? 'є дані' : 'немає даних');
+            })
+            .catch((error) => {
+                console.error('❌ Помилка тесту підключення до Firebase:', error);
+                console.error('Деталі помилки:', error.code, error.message);
+                if (error.code === 'PERMISSION_DENIED') {
+                    console.error('🚨 ПОМИЛКА: Немає дозволу на читання з Firebase!');
+                    console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console');
+                }
+            });
         
         // Слухач змін в базі даних
         categoriesRef.on('value', (snapshot) => {
@@ -296,8 +314,35 @@ function setupFirebaseListener() {
                 updateTotals();
             }
         }, (error) => {
-            console.error('Помилка слухача Firebase:', error);
+            console.error('❌ Помилка слухача Firebase:', error);
+            console.error('Деталі помилки:', {
+                code: error.code,
+                message: error.message,
+                stack: error.stack
+            });
+            
+            if (error.code === 'PERMISSION_DENIED') {
+                console.error('🚨 ПОМИЛКА: Немає дозволу на читання з Firebase!');
+                console.error('🔧 РІШЕННЯ: Перевірте правила безпеки в Firebase Console:');
+                console.error('   1. Відкрийте https://console.firebase.google.com/');
+                console.error('   2. Виберіть проект remcar-a23dc');
+                console.error('   3. Realtime Database → Rules');
+                console.error('   4. Встановіть правила:');
+                console.error('      {');
+                console.error('        "rules": {');
+                console.error('          "cars": {');
+                console.error('            ".read": true,');
+                console.error('            ".write": true');
+                console.error('          }');
+                console.error('        }');
+                console.error('      }');
+                showSyncStatus('error');
+            } else {
+                showSyncStatus('error');
+            }
+            
             // У випадку помилки використати localStorage
+            console.log('📥 Використовую дані з localStorage через помилку Firebase');
             categories = loadCategories();
             renderCategories();
             updateTotals();
